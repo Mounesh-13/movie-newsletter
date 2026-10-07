@@ -1,0 +1,18 @@
+{
+  "name": "movie-newsletter",
+  "version": "0.1.0",
+  "description": "Daily email newsletter that picks one notable movie released on today's date in history and sends 3 lesser-known facts about it",
+  "type": "module",
+  "scripts": {
+    "pick": "node scripts/pick.js",
+    "facts": "node scripts/facts.js",
+    "send": "node scripts/send.js",
+    "run-all": "node scripts/run-all.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^18.0.6"
+  }
+}
