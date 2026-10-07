@@ -7,9 +7,12 @@ Requires a local `.env` with real keys (never commit it — it is gitignored).
 
 ```bash
 cp .env.example .env
-# fill in: TMDB_API_KEY, GEMINI_API_KEY, RESEND_API_KEY, RESEND_AUDIENCE_ID,
-# RESEND_FROM (verified sender — onboarding@resend.dev only delivers to the
-# account owner, so real sends need e.g. Movie Newsletter <news@yourdomain.com>)
+# fill in: TMDB_API_KEY, GEMINI_API_KEY, RESEND_API_KEY, RESEND_FROM (verified sender —
+# onboarding@resend.dev only delivers to the account owner, so real sends need
+# e.g. Movie Newsletter <news@yourdomain.com>).
+# RESEND_AUDIENCE_ID is optional: leave blank until you create a Segment in the
+# Resend dashboard (Contacts → Segments). Blank = --test sends and signups still
+# work; only full-audience sends require it.
 ```
 
 ## 1. Pick — `npm run pick`

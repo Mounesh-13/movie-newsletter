@@ -69,8 +69,8 @@ export function buildTestPayload({ from, subject, html, email }) {
 // before anything touches the network. Names exactly which one is missing.
 const REQUIRED_SEND_VARS = ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM'];
 
-export function requireSendConfig(env = process.env) {
-  const missing = REQUIRED_SEND_VARS.filter((k) => !env[k] || !String(env[k]).trim());
+export function requireSendConfig(env = process.env, keys = REQUIRED_SEND_VARS) {
+  const missing = keys.filter((k) => !env[k] || !String(env[k]).trim());
   if (missing.length > 0) {
     throw new Error(
       `${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} missing. Add ${missing.length === 1 ? 'it' : 'them'} to your local .env file (see .env.example).`,
@@ -151,8 +151,10 @@ async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
 }
 
 export async function sendDailyEmail(movie, facts, { fetchFn = fetch, delayMs = 200, testEmail = null, from = process.env.RESEND_FROM } = {}) {
-  // Blocker 1+3: validate everything up front — no partial config proceeds.
-  const cfg = requireSendConfig();
+  // Fail closed on the vars this call actually needs. RESEND_AUDIENCE_ID is
+  // only required on the audience path (getSubscribers enforces it there),
+  // so --test sends work with the audience ID blank.
+  const cfg = requireSendConfig(process.env, ['RESEND_API_KEY', 'RESEND_FROM']);
   const apiKey = cfg.apiKey;
   if (!from) from = cfg.from;
   if (!movie || !facts || facts.length !== 3) throw new Error('sendDailyEmail requires a movie and exactly 3 facts.');
@@ -239,9 +241,10 @@ if (isDirectRun) {
       };
       console.log(JSON.stringify(report, null, 2));
     } else {
-      // Blocker 1: validate config AND require --test up front — a bare
-      // `node scripts/sendEmail.js` must never reach the real audience.
-      requireSendConfig();
+      // Fail closed: validate the vars the --test path needs AND require
+      // --test up front — a bare run must never reach the real audience.
+      // RESEND_AUDIENCE_ID is not needed here (test sends bypass it).
+      requireSendConfig(process.env, ['RESEND_API_KEY', 'RESEND_FROM']);
       await sendDailyEmail(sampleMovie, sampleFacts, { testEmail });
     }
   } catch (err) {

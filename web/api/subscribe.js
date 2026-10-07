@@ -25,17 +25,23 @@ export default async function handler(req, res, { fetchFn = fetch } = {}) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const audienceId = process.env.RESEND_AUDIENCE_ID;
-  if (!apiKey || !audienceId) {
+  // RESEND_AUDIENCE_ID is optional: when set, the contact joins that
+  // segment; when blank, a plain global contact is created (Resend's
+  // Audiences page no longer shows it — create a Segment to get an ID).
+  const audienceId = (process.env.RESEND_AUDIENCE_ID || '').trim();
+  if (!apiKey) {
     return res.status(500).json({ error: 'Subscription service is not configured. Please try again later.' });
   }
+
+  const contactBody = { email, unsubscribed: false };
+  if (audienceId) contactBody.segments = [{ id: audienceId }];
 
   let apiRes;
   try {
     apiRes = await fetchFn('https://api.resend.com/contacts', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, unsubscribed: false, segments: [{ id: audienceId }] }),
+      body: JSON.stringify(contactBody),
     });
   } catch {
     return res.status(502).json({ error: 'Could not subscribe. Please try again later.' });

@@ -151,8 +151,7 @@ describe('blocker 1+3: fail-closed config validation', () => {
     assert.equal(requireTestEmail('me@example.com'), 'me@example.com');
   });
 
-  it('passes RESEND_FROM into both test and batch send calls', async () => {
-    process.env.RESEND_API_KEY = 'k';
+  it('passes RESEND_FROM into both test and batch send calls', async () => {    process.env.RESEND_API_KEY = 'k';
     process.env.RESEND_AUDIENCE_ID = 'a';
     process.env.RESEND_FROM = 'News <news@example.com>';
     const bodies = [];
@@ -169,6 +168,34 @@ describe('blocker 1+3: fail-closed config validation', () => {
     await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 });
     const batch = bodies.find((b) => Array.isArray(b));
     assert.ok(batch.every((m) => m.from === 'News <news@example.com>'));
+    restoreEnv();
+  });
+});
+
+describe('audience ID is optional on the --test path', () => {
+  it('--test send works with blank RESEND_AUDIENCE_ID', async () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    delete process.env.RESEND_AUDIENCE_ID;
+    let called = false;
+    const fetchFn = async () => { called = true; return { ok: true, json: async () => ({ id: 'e1' }) }; };
+    const result = await sendDailyEmail(movie, facts, { fetchFn, testEmail: 'me@x.com' });
+    assert.equal(result.sent, 1);
+    assert.equal(called, true);
+    restoreEnv();
+  });
+
+  it('requireSendConfig validates only the keys it is given', () => {
+    const env = { RESEND_API_KEY: 'k', RESEND_FROM: 'f' };
+    assert.doesNotThrow(() => requireSendConfig(env, ['RESEND_API_KEY', 'RESEND_FROM']));
+    assert.throws(() => requireSendConfig(env), /RESEND_AUDIENCE_ID/);
+  });
+
+  it('audience path still refuses a blank audience ID', async () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    delete process.env.RESEND_AUDIENCE_ID;
+    await assert.rejects(() => getSubscribers({ fetchFn: async () => ({}) }), /RESEND_AUDIENCE_ID/);
     restoreEnv();
   });
 });

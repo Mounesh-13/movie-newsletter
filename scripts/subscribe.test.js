@@ -63,4 +63,18 @@ describe('POST /api/subscribe', () => {
     assert.equal(res.statusCode, 502);
     assert.match(res.body.error, /could not subscribe/i);
   });
+
+  it('works with blank audience ID (creates global contact, no segments key)', async () => {
+    delete process.env.RESEND_AUDIENCE_ID;
+    let sentBody = null;
+    const fetchFn = async (url, opts) => {
+      sentBody = JSON.parse(opts.body);
+      return { ok: true, json: async () => ({ id: 'contact-1' }) };
+    };
+    const res = mockRes();
+    await handler({ method: 'POST', body: { email: 'fan@example.com' } }, res, { fetchFn });
+    assert.equal(res.statusCode, 200);
+    assert.equal(sentBody.email, 'fan@example.com');
+    assert.ok(!('segments' in sentBody));
+  });
 });
