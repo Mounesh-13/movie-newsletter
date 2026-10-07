@@ -7,8 +7,8 @@
     "pick": "node scripts/pickMovie.js",
     "facts": "node scripts/getFacts.js",
     "send": "node scripts/sendEmail.js",
-    "run-all": "node scripts/run-all.js",
-    "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js scripts/sendEmail.test.js"
+    "run-all": "node scripts/runAll.js",
+    "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js scripts/sendEmail.test.js scripts/runAll.test.js"
   },
   "keywords": [],
   "author": "",

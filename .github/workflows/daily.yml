@@ -1,0 +1,44 @@
+# NOTE: for the auto-commit step below to work, set
+# repo Settings → Actions → General → Workflow permissions to
+# "Read and write permissions" (and allow GitHub Actions to create
+# and approve pull requests is NOT required). Otherwise the push of
+# data/sent.json will fail with a 403.
+
+name: daily-newsletter
+
+on:
+  schedule:
+    # 6 PM IST = 12:30 UTC (IST is UTC+5:30, so 18:00 - 5:30 = 12:30).
+    # GitHub cron runs in UTC, hence 30 12 * * *.
+    - cron: '30 12 * * *'
+  workflow_dispatch: # manual trigger for end-to-end testing
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install
+
+      - name: Run daily newsletter
+        run: npm run run-all
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+
+      - name: Commit updated sent.json
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sent.json
+          git diff --cached --quiet || git commit -m "chore: record sent movie for $(date -u +%F)"
+          git push
