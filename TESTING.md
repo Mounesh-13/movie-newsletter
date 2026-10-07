@@ -40,21 +40,31 @@ edit the `sample` object at the bottom of `scripts/getFacts.js`, run, then rever
 ## 3. Test email — safe send only
 
 > Never run `node scripts/sendEmail.js` or `npm run send` without `--test`.
-> Without the flag it sends to the **entire audience**.
+> Without the flag it refuses (fail-closed) — but treat any audience send
+> as live: the audience path now uses the Broadcasts API.
+
+Send flow (since the Broadcasts migration): `--test` sends stay on raw
+`POST /emails` (Broadcasts has no ad-hoc recipient; compliance doesn't apply
+to a self-test). The **real audience path** (`sendApproved`) creates a
+broadcast via `POST /broadcasts` with `{segment_id: RESEND_AUDIENCE_ID, from,
+subject, html, send: true}` — Resend substitutes `{{{RESEND_UNSUBSCRIBE_URL}}}`
+and injects `List-Unsubscribe` / `List-Unsubscribe-Post` headers server-side.
+Note: the audience value must be a **Segment ID** (legacy audience IDs will
+fail loudly at broadcast creation).
 
 - [ ] `node scripts/sendEmail.js --test=myemail@example.com` → success log, exit 0.
-- [ ] Pre-send inspection (no inbox needed): `node scripts/sendEmail.js --test=myemail@example.com --dry-run`
-      logs the exact JSON body with zero network calls. Confirm the `{{{RESEND_UNSUBSCRIBE_URL}}}`
-      tag is spelled correctly — it will be literal here by necessity (substitution, if any,
-      happens on Resend's servers at send time, so dry-run cannot prove substitution).
+- [ ] Pre-send inspection (no inbox needed): `... --dry-run` logs both the test
+      payload AND the broadcast payload that the audience path would send.
+      Confirm `segment_id`, `from`, `send: true`, and the tag spelling — the tag
+      stays literal here by necessity (server-side substitution).
 - [ ] Email arrives; renders well on desktop AND a mobile client.
-- [ ] Unsubscribe check (template now uses the docs-verified `{{{RESEND_UNSUBSCRIBE_URL}}}`):
-  - [ ] Gmail → Show original → confirm what `List-Unsubscribe` headers (if any) are present.
-        Note: the merge tag is a Broadcasts/Automations feature; on raw `/emails` API sends
-        it may render literally. If the link is dead or the tag is literal, switch the send
-        path to the Broadcasts API (or add a hosted preferences URL + `List-Unsubscribe`
-        headers) before launch — do not ship a dead unsubscribe link.
-  - [ ] Click the unsubscribe link in the test email → landing page confirms opt-out.
+- [ ] Unsubscribe check (still needs a real send + inbox — dry-run can't prove it):
+  - [ ] Gmail → Show original → `List-Unsubscribe` and `List-Unsubscribe-Post`
+        headers genuinely present (Resend adds these on broadcast sends).
+  - [ ] Unsubscribe link in the delivered mail is a real per-recipient URL,
+        not literal `{{{...}}}` text.
+  - [ ] Click it → landing page confirms opt-out → contact shows unsubscribed
+        in the Resend dashboard.
   - [ ] Resend dashboard → audience → test contact shows unsubscribed/removed.
 
 ## 4. GitHub Action — manual trigger (approval-gate flow)

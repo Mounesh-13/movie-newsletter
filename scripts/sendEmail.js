@@ -128,17 +128,28 @@ export async function getSubscribers({ fetchFn = fetch, apiKey = process.env.RES
   throw new Error(`Failed to fetch contacts from Resend: ${lastError}`);
 }
 
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// Exact JSON body for POST /broadcasts (create + send immediately).
+// Pure (no network). Broadcasts is the only path that yields working
+// per-recipient List-Unsubscribe URLs — raw /emails has no equivalent.
+export function buildBroadcastPayload({ segmentId, from, subject, html, name }) {
+  return { segment_id: segmentId, from, subject, html, name, send: true };
+}
 
-async function sendBatch({ fetchFn, apiKey, from, subject, html, emails }) {
-  const url = 'https://api.resend.com/emails/batch';
-  const res = await fetchFn(url, {
+// Audience sends go ONLY here, explicitly scoped to the segment ID.
+// There is no global/default recipient list — a bad ID fails loudly.
+export async function sendBroadcast({ fetchFn = fetch, apiKey, audienceId, from, subject, html, name }) {
+  if (!audienceId) {
+    throw new Error('RESEND_AUDIENCE_ID is missing. Add it to your local .env file (see .env.example).');
+  }
+  const res = await fetchFn('https://api.resend.com/broadcasts', {
     method: 'POST',
     headers: authHeaders(apiKey),
-    body: JSON.stringify(emails.map((email) => ({ from, to: [email], subject, html }))),
+    body: JSON.stringify(buildBroadcastPayload({ segmentId: audienceId, from, subject, html, name })),
   });
-  if (!res.ok) throw new Error(`Batch send failed: HTTP ${res.status}`);
-  return true;
+  if (!res.ok) throw new Error(`Broadcast send failed: HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data?.id) throw new Error('Broadcast send failed: no broadcast id in response');
+  return { broadcastId: data.id };
 }
 
 async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
@@ -150,10 +161,10 @@ async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
   if (!res.ok) throw new Error(`Send to ${email} failed: HTTP ${res.status}`);
 }
 
-export async function sendDailyEmail(movie, facts, { fetchFn = fetch, delayMs = 200, testEmail = null, from = process.env.RESEND_FROM } = {}) {
-  // Fail closed on the vars this call actually needs. RESEND_AUDIENCE_ID is
-  // only required on the audience path (getSubscribers enforces it there),
-  // so --test sends work with the audience ID blank.
+export async function sendDailyEmail(movie, facts, { fetchFn = fetch, testEmail = null, from = process.env.RESEND_FROM } = {}) {
+  // --test path: Broadcasts has NO ad-hoc single recipient (segment sends
+  // only), so test sends stay on raw /emails — unsubscribe compliance
+  // doesn't apply to a test mail to yourself. Hence the two paths differ.
   const cfg = requireSendConfig(process.env, ['RESEND_API_KEY', 'RESEND_FROM']);
   const apiKey = cfg.apiKey;
   if (!from) from = cfg.from;
@@ -169,38 +180,21 @@ export async function sendDailyEmail(movie, facts, { fetchFn = fetch, delayMs = 
     return { sent: 1, failed: 0 };
   }
 
-  const subscribers = await getSubscribers({ fetchFn, apiKey });
+  // Audience path: full config required — sending without a scoped
+  // audience ID is never allowed.
+  const full = requireSendConfig();
+  const subscribers = await getSubscribers({ fetchFn, apiKey: full.apiKey, audienceId: full.audienceId });
   if (subscribers.length === 0) {
     console.log('No active subscribers found. Nothing to send.');
     return { sent: 0, failed: 0 };
   }
 
-  let sent = 0;
-  let failed = 0;
-  const chunks = [];
-  for (let i = 0; i < subscribers.length; i += 100) chunks.push(subscribers.slice(i, i + 100));
-
-  for (const chunk of chunks) {
-    try {
-      await sendBatch({ fetchFn, apiKey, from, subject, html, emails: chunk });
-      sent += chunk.length;
-    } catch {
-      // Batch unsupported/failed -> loop individually with a small delay
-      for (const email of chunk) {
-        try {
-          await sendOne({ fetchFn, apiKey, from, subject, html, email });
-          sent++;
-        } catch (err) {
-          failed++;
-          console.error(`Error: ${err.message}`);
-        }
-        if (delayMs > 0) await delay(delayMs);
-      }
-    }
-  }
-
-  console.log(`Sent ${sent} email(s) successfully${failed ? `, ${failed} failed` : ''}.`);
-  return { sent, failed };
+  const name = `Daily Pick ${new Date().toISOString().slice(0, 10)}: ${movie.title}`;
+  const { broadcastId } = await sendBroadcast({
+    fetchFn, apiKey: full.apiKey, audienceId: full.audienceId, from, subject, html, name,
+  });
+  console.log(`Broadcast ${broadcastId} sent to segment (${subscribers.length} subscriber(s)). Unsubscribe handling by Resend.`);
+  return { sent: subscribers.length, failed: 0, broadcastId };
 }
 
 const isDirectRun = (() => {
@@ -224,18 +218,32 @@ if (isDirectRun) {
       // Inspection only: zero network calls, works without env keys
       // (unset values shown as placeholders). Secret is never printed.
       const year = sampleMovie.release_date.slice(0, 4);
+      const subject = `Today's Pick: ${sampleMovie.title} (${year})`;
+      const html = buildEmailHtml(sampleMovie, sampleFacts);
       const report = {
         dryRun: true,
-        note: 'Payload that WOULD be sent. Tag substitution (if any) happens on Resend servers at send time, so the tag below is literal by necessity — this cannot prove substitution.',
-        request: {
+        note: 'Payloads that WOULD be sent. Tag substitution and List-Unsubscribe headers are applied server-side by Resend on broadcast send, so the tag below is literal by necessity — this cannot prove substitution or header presence; only a real send + inbox check can.',
+        testRequest: {
           url: 'https://api.resend.com/emails',
           method: 'POST',
           headers: { Authorization: 'Bearer [REDACTED]', 'Content-Type': 'application/json' },
           body: buildTestPayload({
             from: process.env.RESEND_FROM || '[RESEND_FROM not set]',
-            subject: `Today's Pick: ${sampleMovie.title} (${year})`,
-            html: buildEmailHtml(sampleMovie, sampleFacts),
+            subject,
+            html,
             email: testEmail,
+          }),
+        },
+        audienceBroadcastRequest: {
+          url: 'https://api.resend.com/broadcasts',
+          method: 'POST',
+          headers: { Authorization: 'Bearer [REDACTED]', 'Content-Type': 'application/json' },
+          body: buildBroadcastPayload({
+            segmentId: process.env.RESEND_AUDIENCE_ID || '[RESEND_AUDIENCE_ID not set]',
+            from: process.env.RESEND_FROM || '[RESEND_FROM not set]',
+            subject,
+            html,
+            name: `Daily Pick ${new Date().toISOString().slice(0, 10)}: ${sampleMovie.title}`,
           }),
         },
       };

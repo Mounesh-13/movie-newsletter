@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 // RED gate: fails until sendEmail.js exists
-import { buildEmailHtml, parseTestEmail, parseDryRun, buildTestPayload, sendDailyEmail, getSubscribers, requireSendConfig, requireTestEmail } from './sendEmail.js';
+import { buildEmailHtml, parseTestEmail, parseDryRun, buildTestPayload, buildBroadcastPayload, sendBroadcast, sendDailyEmail, getSubscribers, requireSendConfig, requireTestEmail } from './sendEmail.js';
 
 const movie = { title: 'Jurassic Park', release_date: '1993-06-11' };
 const facts = ['Fact one.', 'Fact two.', 'Fact three.'];
@@ -91,22 +91,91 @@ describe('getSubscribers', () => {
 });
 
 describe('sendDailyEmail', () => {
-  it('batch-sends to subscribers and reports counts', async () => {
-    process.env.RESEND_API_KEY = 'fake';
-    process.env.RESEND_AUDIENCE_ID = 'aud_123';
-    process.env.RESEND_FROM = 'News <news@example.com>';
+  function broadcastFetch() {
     const calls = [];
     const fetchFn = async (url, opts) => {
-      calls.push(url);
+      calls.push({ url, body: opts?.body ? JSON.parse(opts.body) : null });
       if (url.includes('/contacts')) {
         return { ok: true, json: async () => ({ data: [{ email: 'a@example.com', unsubscribed: false }] }) };
       }
+      if (url === 'https://api.resend.com/broadcasts') {
+        return { ok: true, json: async () => ({ object: 'broadcast', id: 'bcast-1' }) };
+      }
       return { ok: true, json: async () => ({ id: 'email-id-1' }) };
     };
+    return { calls, fetchFn };
+  }
+
+  it('sends the audience via Broadcasts API scoped to RESEND_AUDIENCE_ID', async () => {
+    process.env.RESEND_API_KEY = 'fake';
+    process.env.RESEND_AUDIENCE_ID = 'aud_123';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    const { calls, fetchFn } = broadcastFetch();
     const result = await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 });
+    const created = calls.find((c) => c.url === 'https://api.resend.com/broadcasts');
+    assert.ok(created, 'must POST /broadcasts');
+    assert.equal(created.body.segment_id, 'aud_123');
+    assert.equal(created.body.from, 'News <news@example.com>');
+    assert.equal(created.body.send, true);
+    assert.match(created.body.html, /\{\{\{RESEND_UNSUBSCRIBE_URL\}\}\}/);
+    assert.ok(!calls.some((c) => c.url === 'https://api.resend.com/emails/batch'), 'no raw batch on audience path');
     assert.equal(result.sent, 1);
     assert.equal(result.failed, 0);
-    assert.ok(calls.some((u) => u.includes('/emails')));
+    assert.equal(result.broadcastId, 'bcast-1');
+    restoreEnv();
+  });
+
+  it('rejects loudly when broadcast creation fails', async () => {
+    process.env.RESEND_API_KEY = 'fake';
+    process.env.RESEND_AUDIENCE_ID = 'aud_123';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    const fetchFn = async (url) => {
+      if (url.includes('/contacts')) {
+        return { ok: true, json: async () => ({ data: [{ email: 'a@example.com', unsubscribed: false }] }) };
+      }
+      return { ok: false, status: 422, json: async () => ({}) };
+    };
+    await assert.rejects(() => sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 }), /Broadcast send failed: HTTP 422/);
+    restoreEnv();
+  });
+
+  it('rejects when the broadcast response has no id', async () => {
+    process.env.RESEND_API_KEY = 'fake';
+    process.env.RESEND_AUDIENCE_ID = 'aud_123';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    const fetchFn = async (url) => {
+      if (url.includes('/contacts')) {
+        return { ok: true, json: async () => ({ data: [{ email: 'a@example.com', unsubscribed: false }] }) };
+      }
+      return { ok: true, json: async () => ({ object: 'broadcast' }) };
+    };
+    await assert.rejects(() => sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 }), /no broadcast id/i);
+    restoreEnv();
+  });
+
+  it('--test path stays on raw /emails and never touches /broadcasts', async () => {
+    process.env.RESEND_API_KEY = 'fake';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    delete process.env.RESEND_AUDIENCE_ID;
+    const urls = [];
+    const fetchFn = async (url) => {
+      urls.push(url);
+      return { ok: true, json: async () => ({ id: 'e1' }) };
+    };
+    // Broadcasts has no ad-hoc recipient: raw /emails is correct for test
+    // sends, where unsubscribe compliance doesn't apply.
+    const result = await sendDailyEmail(movie, facts, { fetchFn, testEmail: 'me@x.com' });
+    assert.equal(result.sent, 1);
+    assert.deepEqual(urls, ['https://api.resend.com/emails']);
+    restoreEnv();
+  });
+
+  it('audience path still requires RESEND_AUDIENCE_ID', async () => {
+    process.env.RESEND_API_KEY = 'fake';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    delete process.env.RESEND_AUDIENCE_ID;
+    await assert.rejects(() => sendDailyEmail(movie, facts, { fetchFn: async () => ({}) }), /RESEND_AUDIENCE_ID/);
+    restoreEnv();
   });
 
   it('throws clearly when RESEND_API_KEY is missing', async () => {
@@ -151,23 +220,26 @@ describe('blocker 1+3: fail-closed config validation', () => {
     assert.equal(requireTestEmail('me@example.com'), 'me@example.com');
   });
 
-  it('passes RESEND_FROM into both test and batch send calls', async () => {    process.env.RESEND_API_KEY = 'k';
+  it('passes RESEND_FROM into the test call and the broadcast payload', async () => {    process.env.RESEND_API_KEY = 'k';
     process.env.RESEND_AUDIENCE_ID = 'a';
     process.env.RESEND_FROM = 'News <news@example.com>';
     const bodies = [];
     const fetchFn = async (url, opts) => {
-      if (opts?.body) bodies.push(JSON.parse(opts.body));
+      if (opts?.body) bodies.push({ url, body: JSON.parse(opts.body) });
       if (url.includes('/contacts')) {
         return { ok: true, json: async () => ({ data: [{ email: 'a@x.com', unsubscribed: false }] }) };
+      }
+      if (url === 'https://api.resend.com/broadcasts') {
+        return { ok: true, json: async () => ({ object: 'broadcast', id: 'b1' }) };
       }
       return { ok: true, json: async () => ({ id: 'e1' }) };
     };
     await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0, testEmail: 'me@x.com' });
-    assert.equal(bodies[bodies.length - 1].from, 'News <news@example.com>');
+    assert.equal(bodies[bodies.length - 1].body.from, 'News <news@example.com>');
     bodies.length = 0;
     await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 });
-    const batch = bodies.find((b) => Array.isArray(b));
-    assert.ok(batch.every((m) => m.from === 'News <news@example.com>'));
+    const created = bodies.find((b) => b.url === 'https://api.resend.com/broadcasts');
+    assert.equal(created.body.from, 'News <news@example.com>');
     restoreEnv();
   });
 });
