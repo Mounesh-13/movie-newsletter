@@ -4,10 +4,11 @@
   "description": "Daily email newsletter that picks one notable movie released on today's date in history and sends 3 lesser-known facts about it",
   "type": "module",
   "scripts": {
-    "pick": "node scripts/pick.js",
+    "pick": "node scripts/pickMovie.js",
     "facts": "node scripts/facts.js",
     "send": "node scripts/send.js",
-    "run-all": "node scripts/run-all.js"
+    "run-all": "node scripts/run-all.js",
+    "test": "node --test scripts/pickMovie.test.js"
   },
   "keywords": [],
   "author": "",
