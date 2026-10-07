@@ -107,6 +107,21 @@ describe('sendApproved (approve=true)', () => {
     );
   });
 
+  it('blocker 4: zero delivery keeps pending.json, records nothing', async () => {
+    for (const zeroResult of [{ sent: 0, failed: 2 }, { sent: 0, failed: 0 }]) {
+      await writeFile(pendingPath, JSON.stringify({ movie, facts }), 'utf8');
+      await writeFile(sentPath, '[]', 'utf8');
+      const result = await runAll({
+        approve: true,
+        sendFn: async () => zeroResult,
+        sentPath, pendingPath, logger: quiet,
+      });
+      assert.equal(result.status, 'skipped-send-failed', JSON.stringify(zeroResult));
+      assert.equal(await exists(pendingPath), true, 'draft must be kept for retry');
+      assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), [], 'id must NOT be recorded');
+    }
+  });
+
   it('does not duplicate an id already in sent.json', async () => {
     await writeFile(sentPath, '[11]', 'utf8');
     await recordSentId(sentPath, 11);

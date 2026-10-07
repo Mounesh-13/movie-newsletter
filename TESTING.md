@@ -7,13 +7,10 @@ Requires a local `.env` with real keys (never commit it — it is gitignored).
 
 ```bash
 cp .env.example .env
-# fill in: TMDB_API_KEY, GEMINI_API_KEY, RESEND_API_KEY, RESEND_AUDIENCE_ID
+# fill in: TMDB_API_KEY, GEMINI_API_KEY, RESEND_API_KEY, RESEND_AUDIENCE_ID,
+# RESEND_FROM (verified sender — onboarding@resend.dev only delivers to the
+# account owner, so real sends need e.g. Movie Newsletter <news@yourdomain.com>)
 ```
-
-> Known gap: `RESEND_FROM` (verified sender, e.g. `Movie Newsletter <news@yourdomain.com>`)
-> and `GEMINI_MODEL` are read by the code but missing from `.env.example`.
-> Add them to your local `.env` too. `onboarding@resend.dev` only delivers
-> to the account owner, so real sends need a verified domain sender.
 
 ## 1. Pick — `npm run pick`
 
@@ -65,7 +62,7 @@ Default runs only PREPARE (pick + facts → `data/pending.json`, no send):
 ## 5. Signup — live Vercel page
 
 Prereqs: Vercel project with Root Directory `web`; env vars `RESEND_API_KEY`,
-`RESEND_AUDIENCE_ID` set in the Vercel dashboard (all environments).
+`RESEND_AUDIENCE_ID`, `RESEND_FROM` set in the Vercel dashboard (all environments).
 
 - [ ] Submit your own email on the live page → success message, no reload.
 - [ ] It appears in Resend dashboard → Contacts/Audience within a minute.
@@ -77,9 +74,13 @@ Prereqs: Vercel project with Root Directory `web`; env vars `RESEND_API_KEY`,
 - [ ] Manually dispatch with `approve_send: true`. Confirm: audience delivery,
       `sent.json` committed, `pending.json` cleared, summary in the Action log.
 
-## 7. Open launch blockers (from code review — fix before step 6)
+## 7. Launch blockers — RESOLVED
 
-1. `sendEmail.js` direct run without `--test` sends to everyone → make it refuse (fail-closed).
-2. `getSubscribers` falls back to the unscoped global `/contacts` list → remove fallback.
-3. `RESEND_FROM` not wired in workflow/`.env.example` → require + document it.
-4. `runAll` records the id even when delivery count is 0 → check `sendResult` first.
+1. ~~Direct run without `--test` sends to everyone~~ → FIXED: direct run now calls
+   `requireTestEmail()` and refuses (`Refusing to send to the real audience…`, exit 1).
+2. ~~Global `/contacts` fallback~~ → FIXED: fallback URL removed; a wrong audience ID
+   fails loudly after the two scoped attempts, never substituting another list.
+3. ~~`RESEND_FROM` unwired~~ → FIXED: required at startup via `requireSendConfig()`,
+   passed into every send call, added to `.env.example`, `daily.yml`, and Vercel env list (§5 needs `RESEND_FROM` too).
+4. ~~Zero-delivery records id~~ → FIXED (was already guarded in `sendApproved`, now proven):
+   `sent: 0` keeps `pending.json`, records nothing, returns `skipped-send-failed` (exit 1).

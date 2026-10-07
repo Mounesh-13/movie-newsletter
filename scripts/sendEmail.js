@@ -55,6 +55,29 @@ export function parseTestEmail(argv = process.argv) {
   return flag ? flag.slice('--test='.length) : null;
 }
 
+// Blocker 1+3: fail closed — every required var must be present and non-empty
+// before anything touches the network. Names exactly which one is missing.
+const REQUIRED_SEND_VARS = ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM'];
+
+export function requireSendConfig(env = process.env) {
+  const missing = REQUIRED_SEND_VARS.filter((k) => !env[k] || !String(env[k]).trim());
+  if (missing.length > 0) {
+    throw new Error(
+      `${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} missing. Add ${missing.length === 1 ? 'it' : 'them'} to your local .env file (see .env.example).`,
+    );
+  }
+  return { apiKey: env.RESEND_API_KEY, audienceId: env.RESEND_AUDIENCE_ID, from: env.RESEND_FROM };
+}
+
+// Blocker 1: a direct/manual run without --test must refuse, never fall
+// through to the real-audience path.
+export function requireTestEmail(testEmail) {
+  if (!testEmail) {
+    throw new Error('Refusing to send to the real audience. Re-run with --test=you@example.com');
+  }
+  return testEmail;
+}
+
 function authHeaders(apiKey) {
   return { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
 }
@@ -65,7 +88,10 @@ function extractEmails(data) {
 }
 
 // Audiences API is deprecated in favor of Segments (Nov 2025), so try the
-// legacy path first, then segments, then the global contacts list.
+// legacy path first, then segments. Blocker 2: there is deliberately NO
+// fallback to the unscoped global /contacts list — emailing every contact
+// in the account because one audience fetch failed would be a privacy
+// incident. A scoped fetch failure throws loudly instead.
 export async function getSubscribers({ fetchFn = fetch, apiKey = process.env.RESEND_API_KEY, audienceId = process.env.RESEND_AUDIENCE_ID } = {}) {
   if (!apiKey) throw new Error('RESEND_API_KEY is missing. Add it to your local .env file (see .env.example).');
   if (!audienceId) throw new Error('RESEND_AUDIENCE_ID is missing. Add it to your local .env file (see .env.example).');
@@ -73,7 +99,6 @@ export async function getSubscribers({ fetchFn = fetch, apiKey = process.env.RES
   const urls = [
     `https://api.resend.com/audiences/${audienceId}/contacts`,
     `https://api.resend.com/segments/${audienceId}/contacts`,
-    'https://api.resend.com/contacts',
   ];
   let lastError = '';
   for (const url of urls) {
@@ -115,9 +140,11 @@ async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
   if (!res.ok) throw new Error(`Send to ${email} failed: HTTP ${res.status}`);
 }
 
-export async function sendDailyEmail(movie, facts, { fetchFn = fetch, delayMs = 200, testEmail = null, from = process.env.RESEND_FROM || 'Movie Newsletter <onboarding@resend.dev>' } = {}) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error('RESEND_API_KEY is missing. Add it to your local .env file (see .env.example).');
+export async function sendDailyEmail(movie, facts, { fetchFn = fetch, delayMs = 200, testEmail = null, from = process.env.RESEND_FROM } = {}) {
+  // Blocker 1+3: validate everything up front — no partial config proceeds.
+  const cfg = requireSendConfig();
+  const apiKey = cfg.apiKey;
+  if (!from) from = cfg.from;
   if (!movie || !facts || facts.length !== 3) throw new Error('sendDailyEmail requires a movie and exactly 3 facts.');
 
   const year = (movie.release_date || '').slice(0, 4);
@@ -173,16 +200,20 @@ const isDirectRun = (() => {
 })();
 
 if (isDirectRun) {
-  const testEmail = parseTestEmail();
-  const sampleMovie = { title: 'Jurassic Park', release_date: '1993-06-11' };
-  const sampleFacts = [
-    'The iconic T. rex roar was stitched together from tiger, alligator, and baby elephant sounds.',
-    'The film used pioneering CGI alongside life-size animatronics built by Stan Winston’s crew.',
-    'It became the highest-grossing film ever at release, holding the record for four years.',
-  ];
-  sendDailyEmail(sampleMovie, sampleFacts, { testEmail })
-    .catch((err) => {
-      console.error(`Error: ${err.message}`);
-      process.exit(1);
-    });
+  try {
+    // Blocker 1: validate config AND require --test up front — a bare
+    // `node scripts/sendEmail.js` must never reach the real audience.
+    requireSendConfig();
+    const testEmail = requireTestEmail(parseTestEmail());
+    const sampleMovie = { title: 'Jurassic Park', release_date: '1993-06-11' };
+    const sampleFacts = [
+      'The iconic T. rex roar was stitched together from tiger, alligator, and baby elephant sounds.',
+      'The film used pioneering CGI alongside life-size animatronics built by Stan Winston’s crew.',
+      'It became the highest-grossing film ever at release, holding the record for four years.',
+    ];
+    await sendDailyEmail(sampleMovie, sampleFacts, { testEmail });
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    process.exit(1);
+  }
 }

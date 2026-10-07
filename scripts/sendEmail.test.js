@@ -2,10 +2,20 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 // RED gate: fails until sendEmail.js exists
-import { buildEmailHtml, parseTestEmail, sendDailyEmail, getSubscribers } from './sendEmail.js';
+import { buildEmailHtml, parseTestEmail, sendDailyEmail, getSubscribers, requireSendConfig, requireTestEmail } from './sendEmail.js';
 
 const movie = { title: 'Jurassic Park', release_date: '1993-06-11' };
 const facts = ['Fact one.', 'Fact two.', 'Fact three.'];
+
+// Isolate env mutations between tests (node --test runs files in sequence)
+const savedEnv = {};
+for (const k of ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM']) savedEnv[k] = process.env[k];
+function restoreEnv() {
+  for (const k of ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM']) {
+    if (savedEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedEnv[k];
+  }
+}
 
 describe('buildEmailHtml', () => {
   it('includes title, year, header, facts, footer, unsubscribe tag', () => {
@@ -65,6 +75,7 @@ describe('sendDailyEmail', () => {
   it('batch-sends to subscribers and reports counts', async () => {
     process.env.RESEND_API_KEY = 'fake';
     process.env.RESEND_AUDIENCE_ID = 'aud_123';
+    process.env.RESEND_FROM = 'News <news@example.com>';
     const calls = [];
     const fetchFn = async (url, opts) => {
       calls.push(url);
@@ -80,7 +91,81 @@ describe('sendDailyEmail', () => {
   });
 
   it('throws clearly when RESEND_API_KEY is missing', async () => {
+    process.env.RESEND_AUDIENCE_ID = 'aud_123';
+    process.env.RESEND_FROM = 'News <news@example.com>';
     delete process.env.RESEND_API_KEY;
     await assert.rejects(() => sendDailyEmail(movie, facts, { fetchFn: async () => ({}) }), /RESEND_API_KEY is missing/);
+    restoreEnv();
+  });
+});
+
+describe('blocker 1+3: fail-closed config validation', () => {
+  it('requireSendConfig names each missing variable exactly', () => {
+    for (const missing of ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM']) {
+      process.env.RESEND_API_KEY = 'k';
+      process.env.RESEND_AUDIENCE_ID = 'a';
+      process.env.RESEND_FROM = 'f';
+      delete process.env[missing];
+      assert.throws(() => requireSendConfig(), new RegExp(missing), missing);
+    }
+    restoreEnv();
+  });
+
+  it('treats empty-string values as missing', () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_AUDIENCE_ID = 'a';
+    process.env.RESEND_FROM = '   ';
+    assert.throws(() => requireSendConfig(), /RESEND_FROM/);
+    restoreEnv();
+  });
+
+  it('sendDailyEmail refuses when RESEND_FROM is unset', async () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_AUDIENCE_ID = 'a';
+    delete process.env.RESEND_FROM;
+    await assert.rejects(() => sendDailyEmail(movie, facts, { fetchFn: async () => ({}) }), /RESEND_FROM/);
+    restoreEnv();
+  });
+
+  it('requireTestEmail refuses a direct run without --test', () => {
+    assert.throws(() => requireTestEmail(null), /Refusing to send to the real audience/);
+    assert.equal(requireTestEmail('me@example.com'), 'me@example.com');
+  });
+
+  it('passes RESEND_FROM into both test and batch send calls', async () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_AUDIENCE_ID = 'a';
+    process.env.RESEND_FROM = 'News <news@example.com>';
+    const bodies = [];
+    const fetchFn = async (url, opts) => {
+      if (opts?.body) bodies.push(JSON.parse(opts.body));
+      if (url.includes('/contacts')) {
+        return { ok: true, json: async () => ({ data: [{ email: 'a@x.com', unsubscribed: false }] }) };
+      }
+      return { ok: true, json: async () => ({ id: 'e1' }) };
+    };
+    await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0, testEmail: 'me@x.com' });
+    assert.equal(bodies[bodies.length - 1].from, 'News <news@example.com>');
+    bodies.length = 0;
+    await sendDailyEmail(movie, facts, { fetchFn, delayMs: 0 });
+    const batch = bodies.find((b) => Array.isArray(b));
+    assert.ok(batch.every((m) => m.from === 'News <news@example.com>'));
+    restoreEnv();
+  });
+});
+
+describe('blocker 2: no global-contacts fallback', () => {
+  it('fails loudly on a wrong audience ID and never touches the global list', async () => {
+    process.env.RESEND_API_KEY = 'k';
+    process.env.RESEND_AUDIENCE_ID = 'aud_wrong';
+    const calledUrls = [];
+    const fetchFn = async (url) => {
+      calledUrls.push(url);
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+    await assert.rejects(() => getSubscribers({ fetchFn }), /aud_wrong|Failed to fetch contacts/);
+    assert.ok(calledUrls.length > 0);
+    assert.ok(calledUrls.every((u) => u.includes('aud_wrong')), `global fallback hit: ${calledUrls}`);
+    restoreEnv();
   });
 });
