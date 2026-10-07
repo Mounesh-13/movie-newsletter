@@ -6,9 +6,9 @@
   "scripts": {
     "pick": "node scripts/pickMovie.js",
     "facts": "node scripts/getFacts.js",
-    "send": "node scripts/send.js",
+    "send": "node scripts/sendEmail.js",
     "run-all": "node scripts/run-all.js",
-    "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js"
+    "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js scripts/sendEmail.test.js"
   },
   "keywords": [],
   "author": "",
