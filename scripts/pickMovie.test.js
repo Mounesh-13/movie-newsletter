@@ -47,4 +47,14 @@ describe('pickWinner', () => {
     assert.equal(pickWinner([], [], 2026), null);
     assert.equal(pickWinner([{ id: 1, title: 'x', release_date: '2000-01-01', vote_average: 5, vote_count: 10, overview: '' }], [], 2026), null);
   });
+  it('ignores malformed candidates (missing/NaN ratings) without crashing and never picks them', () => {
+    const movies = [
+      { id: 9, title: 'Broken', release_date: null, vote_average: undefined, vote_count: 600, overview: '' },
+      { id: 10, title: 'Also broken', release_date: 'not-a-date', vote_average: NaN, vote_count: 9000, overview: '' },
+      { id: 2, title: 'Good', release_date: '2001-10-07', vote_average: 8.0, vote_count: 5000, overview: 'y' },
+    ];
+    const winner = pickWinner(movies, [], 2026);
+    assert.equal(winner.id, 2);
+    assert.ok(Number.isFinite(winner.score));
+  });
 });

@@ -23,10 +23,22 @@ export function calculateScore(movie, currentYear) {
   return base + popularity + anniversaryBonus(releaseYear, currentYear);
 }
 
+// NaN guard: drop records that can't be scored (missing/NaN ratings or
+// unparseable date) instead of letting NaN poison the sort. Formula untouched.
+function isScorable(m) {
+  return (
+    m &&
+    Number.isFinite(m.vote_average) &&
+    Number.isFinite(m.vote_count) &&
+    !Number.isNaN(new Date(m.release_date).getTime())
+  );
+}
+
 export function pickWinner(movies, sentIds = [], currentYear = new Date().getFullYear()) {
   const sent = new Set(sentIds);
   const candidates = movies
     .filter((m) => m.vote_count >= 500)
+    .filter(isScorable)
     .filter((m) => !sent.has(m.id))
     .map((m) => ({ ...m, score: calculateScore(m, currentYear) }))
     .sort((a, b) => b.score - a.score);
@@ -80,6 +92,7 @@ export async function pickMovie({ fetchFn = fetch, today = new Date(), sentPath 
   const dd = String(today.getDate()).padStart(2, '0');
 
   const all = [];
+  // Known future optimization: batch these per-year fetches with Promise.all (bounded concurrency) instead of serial awaits. Left serial for now — fine for a once-daily run.
   for (let year = 1950; year <= currentYear; year++) {
     const dateStr = `${year}-${mm}-${dd}`;
     const results = await fetchMoviesForDate(apiKey, dateStr, fetchFn);

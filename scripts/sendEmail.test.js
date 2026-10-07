@@ -27,7 +27,7 @@ describe('buildEmailHtml', () => {
     assert.match(html, /Fact two/);
     assert.match(html, /Fact three/);
     assert.match(html, /Movie data via TMDB and Wikipedia\./);
-    assert.match(html, /\{\{\{UNSUBSCRIBE_URL\}\}\}/);
+    assert.match(html, /\{\{\{RESEND_UNSUBSCRIBE_URL\}\}\}/);
   });
 
   it('uses inline CSS only (no external stylesheets)', () => {

@@ -14,7 +14,7 @@ export function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-export function buildEmailHtml(movie, facts, { unsubscribeUrl = '{{{UNSUBSCRIBE_URL}}}' } = {}) {
+export function buildEmailHtml(movie, facts, { unsubscribeUrl = '{{{RESEND_UNSUBSCRIBE_URL}}}' } = {}) {
   const title = escapeHtml(movie.title);
   const year = escapeHtml((movie.release_date || '').slice(0, 4));
   const items = facts.map((f) => `              <li style="margin:0 0 12px 0;font-size:16px;line-height:1.6;color:#1a1a1a;">${escapeHtml(f)}</li>`).join('\n');

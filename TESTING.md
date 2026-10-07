@@ -41,9 +41,14 @@ edit the `sample` object at the bottom of `scripts/getFacts.js`, run, then rever
 
 - [ ] `node scripts/sendEmail.js --test=myemail@example.com` → success log, exit 0.
 - [ ] Email arrives; renders well on desktop AND a mobile client.
-- [ ] Unsubscribe link present. (Note: `{{{UNSUBSCRIBE_URL}}}` is a Broadcast-template
-      tag and may not resolve in raw API sends — verify the received link actually works;
-      if dead, switch to a `List-Unsubscribe` header or hosted preferences URL before launch.)
+- [ ] Unsubscribe check (template now uses the docs-verified `{{{RESEND_UNSUBSCRIBE_URL}}}`):
+  - [ ] Gmail → Show original → confirm what `List-Unsubscribe` headers (if any) are present.
+        Note: the merge tag is a Broadcasts/Automations feature; on raw `/emails` API sends
+        it may render literally. If the link is dead or the tag is literal, switch the send
+        path to the Broadcasts API (or add a hosted preferences URL + `List-Unsubscribe`
+        headers) before launch — do not ship a dead unsubscribe link.
+  - [ ] Click the unsubscribe link in the test email → landing page confirms opt-out.
+  - [ ] Resend dashboard → audience → test contact shows unsubscribed/removed.
 
 ## 4. GitHub Action — manual trigger (approval-gate flow)
 
@@ -84,3 +89,13 @@ Prereqs: Vercel project with Root Directory `web`; env vars `RESEND_API_KEY`,
    passed into every send call, added to `.env.example`, `daily.yml`, and Vercel env list (§5 needs `RESEND_FROM` too).
 4. ~~Zero-delivery records id~~ → FIXED (was already guarded in `sendApproved`, now proven):
    `sent: 0` keeps `pending.json`, records nothing, returns `skipped-send-failed` (exit 1).
+
+## 8. Hardening pass — RESOLVED (blockers above untouched)
+
+5. ~~Wrong unsubscribe tag (`{{{UNSUBSCRIBE_URL}}}`)~~ → FIXED: template now uses the
+   docs-verified `{{{RESEND_UNSUBSCRIBE_URL}}}`. Raw-API substitution + header presence
+   still require the manual §3 checks above before launch.
+6. ~~NaN scores from malformed TMDB records~~ → FIXED: `pickWinner` excludes unscorable
+   candidates (non-finite ratings / unparseable date); formula untouched; covered by test.
+7. TMDB serial per-year fetches → DEFERRED: known future optimization (`Promise.all`
+   batching), noted in-code; fine for a once-daily run, not a launch blocker.
