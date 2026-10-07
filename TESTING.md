@@ -73,6 +73,9 @@ Default runs only PREPARE (pick + facts → `data/pending.json`, no send):
 
 ## 5. Signup — live Vercel page
 
+> Gate: see KNOWN_LIMITATIONS.md — do NOT open public signups until the
+> deliverability limitation (shared sandbox domain) is resolved.
+
 Prereqs: Vercel project with Root Directory `web`; env vars `RESEND_API_KEY`,
 `RESEND_AUDIENCE_ID`, `RESEND_FROM` set in the Vercel dashboard (all environments).
 
