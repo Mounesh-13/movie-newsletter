@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "pick": "node scripts/pickMovie.js",
-    "facts": "node scripts/facts.js",
+    "facts": "node scripts/getFacts.js",
     "send": "node scripts/send.js",
     "run-all": "node scripts/run-all.js",
-    "test": "node --test scripts/pickMovie.test.js"
+    "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js"
   },
   "keywords": [],
   "author": "",
