@@ -8,6 +8,7 @@
     "facts": "node scripts/getFacts.js",
     "send": "node scripts/sendEmail.js",
     "run-all": "node scripts/runAll.js",
+    "run-all:approve": "node scripts/runAll.js --approve",
     "test": "node --test scripts/pickMovie.test.js scripts/getFacts.test.js scripts/sendEmail.test.js scripts/runAll.test.js scripts/subscribe.test.js"
   },
   "keywords": [],

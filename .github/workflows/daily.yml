@@ -12,6 +12,21 @@ on:
     # GitHub cron runs in UTC, hence 30 12 * * *.
     - cron: '30 12 * * *'
   workflow_dispatch: # manual trigger for end-to-end testing
+    inputs:
+      approve_send:
+        description: 'Send the prepared draft to the real audience (review pending.json / the prepare log first)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+# Never run two sends concurrently (cron + manual) — avoids duplicate emails.
+concurrency:
+  group: daily-newsletter
+  cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
   send:
@@ -24,9 +39,9 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm install
+      - run: npm ci
 
-      - name: Run daily newsletter
+      - name: Prepare daily draft (pick + facts, no send)
         run: npm run run-all
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
@@ -34,11 +49,20 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
 
-      - name: Commit updated sent.json
+      - name: Send approved draft to audience
+        if: inputs.approve_send == 'true'
+        run: npm run run-all:approve
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+
+      - name: Commit updated sent.json / pending.json
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/sent.json
-          git diff --cached --quiet || git commit -m "chore: record sent movie for $(date -u +%F)"
-          git push
+          git add data/sent.json data/pending.json
+          git diff --cached --quiet || git commit -m "chore: update newsletter state for $(date -u +%F)"
+          git pull --rebase && git push

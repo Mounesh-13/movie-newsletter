@@ -48,15 +48,19 @@ edit the `sample` object at the bottom of `scripts/getFacts.js`, run, then rever
       tag and may not resolve in raw API sends — verify the received link actually works;
       if dead, switch to a `List-Unsubscribe` header or hosted preferences URL before launch.)
 
-## 4. GitHub Action — manual trigger
+## 4. GitHub Action — manual trigger (approval-gate flow)
 
 Prereqs: repo pushed; 4 secrets set (Settings → Secrets and Variables → Actions):
 `TMDB_API_KEY`, `GEMINI_API_KEY`, `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`
 (+ `RESEND_FROM` once wired). Workflow permissions → **Read and write**.
 
-- [ ] Actions → daily-newsletter → Run workflow → completes green.
-- [ ] A `chore: record sent movie…` commit for `data/sent.json` lands on main.
-- [ ] If run on a real day with subscribers, the audience email goes out once (no duplicates).
+Default runs only PREPARE (pick + facts → `data/pending.json`, no send):
+
+- [ ] Actions → daily-newsletter → Run workflow (`approve_send: false`) → green.
+- [ ] Read the prepare log: movie + 3 facts look right.
+- [ ] A state commit (`data/pending.json`) lands on main.
+- [ ] To actually send: re-run with `approve_send: true` → audience email goes out
+      once, id recorded in `data/sent.json`, `pending.json` cleared.
 
 ## 5. Signup — live Vercel page
 
@@ -69,9 +73,9 @@ Prereqs: Vercel project with Root Directory `web`; env vars `RESEND_API_KEY`,
 
 ## 6. Full live cron — one real day
 
-- [ ] After steps 1–5 pass, let one scheduled 6 PM IST run fire (or one manual
-      dispatch treated as live). Confirm: movie picked, 3 accurate facts,
-      audience delivery, `sent.json` committed, summary in the Action log.
+- [ ] Let one scheduled 6 PM IST run fire (prepare only). Review the draft.
+- [ ] Manually dispatch with `approve_send: true`. Confirm: audience delivery,
+      `sent.json` committed, `pending.json` cleared, summary in the Action log.
 
 ## 7. Open launch blockers (from code review — fix before step 6)
 

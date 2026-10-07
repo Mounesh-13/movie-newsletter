@@ -1,80 +1,110 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-// RED gate: fails until runAll.js exists
-import { runAll, recordSentId } from './runAll.js';
+// runAll.js must export the approval-gate flow (RED until implemented)
+import { runAll, prepareDraft, sendApproved, recordSentId } from './runAll.js';
 
 const movie = { id: 11, title: 'Jurassic Park', release_date: '1993-06-11', vote_average: 8, vote_count: 9000, overview: 'Dinos.' };
 const facts = ['Fact one.', 'Fact two.', 'Fact three.'];
+const quiet = { log() {}, warn() {}, error() {} };
 
 let dir;
 let sentPath;
+let pendingPath;
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'runall-'));
   sentPath = join(dir, 'sent.json');
+  pendingPath = join(dir, 'pending.json');
   await writeFile(sentPath, '[]', 'utf8');
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
+const exists = async (p) => { try { await access(p); return true; } catch { return false; } };
 
-describe('runAll', () => {
-  it('happy path: picks, facts, sends, records id, returns sent', async () => {
-    const calls = [];
+describe('prepareDraft (default runAll, no send)', () => {
+  it('picks + facts, writes pending.json, does NOT send or touch sent.json', async () => {
+    let sentCalled = false;
     const result = await runAll({
       pickFn: async () => movie,
       factsFn: async () => facts,
-      sendFn: async () => { calls.push('send'); return { sent: 2, failed: 0 }; },
-      sentPath,
-      logger: { log() {}, warn() {}, error() {} },
+      sendFn: async () => { sentCalled = true; },
+      sentPath, pendingPath, logger: quiet,
     });
-    assert.equal(result.status, 'sent');
-    assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), [11]);
-    assert.deepEqual(calls, ['send']);
+    assert.equal(result.status, 'pending-review');
+    assert.equal(sentCalled, false);
+    assert.deepEqual(JSON.parse(await readFile(pendingPath, 'utf8')).movie, movie);
+    assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), []);
   });
 
-  it('no movie (null): warns, skips send, exits cleanly', async () => {
-    let sentCalled = false;
+  it('prepareDraft helper is exported and behaves the same', async () => {
+    const result = await prepareDraft({ pickFn: async () => movie, factsFn: async () => facts, pendingPath, logger: quiet });
+    assert.equal(result.status, 'pending-review');
+    assert.ok(await exists(pendingPath));
+  });
+
+  it('no movie (null): warns, writes nothing', async () => {
     const result = await runAll({
       pickFn: async () => null,
       factsFn: async () => facts,
-      sendFn: async () => { sentCalled = true; },
-      sentPath,
-      logger: { log() {}, warn() {}, error() {} },
+      sendFn: async () => { throw new Error('must not send'); },
+      sentPath, pendingPath, logger: quiet,
     });
     assert.equal(result.status, 'skipped-no-movie');
-    assert.equal(sentCalled, false);
-    assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), []);
+    assert.equal(await exists(pendingPath), false);
   });
 
-  it('no movie (pick throws No eligible): warns, skips send', async () => {
-    let sentCalled = false;
+  it('no movie (pick throws No eligible): warns, writes nothing', async () => {
     const result = await runAll({
-      pickFn: async () => { throw new Error('No eligible movies found for today (all filtered out or already sent).'); },
+      pickFn: async () => { throw new Error('No eligible movies found for today.'); },
       factsFn: async () => facts,
-      sendFn: async () => { sentCalled = true; },
-      sentPath,
-      logger: { log() {}, warn() {}, error() {} },
+      sendFn: async () => { throw new Error('must not send'); },
+      sentPath, pendingPath, logger: quiet,
     });
     assert.equal(result.status, 'skipped-no-movie');
-    assert.equal(sentCalled, false);
   });
 
-  it('facts null: errors, skips send, does not record id', async () => {
-    let sentCalled = false;
+  it('facts null: errors, writes nothing', async () => {
     const result = await runAll({
       pickFn: async () => movie,
       factsFn: async () => null,
-      sendFn: async () => { sentCalled = true; },
-      sentPath,
-      logger: { log() {}, warn() {}, error() {} },
+      sendFn: async () => { throw new Error('must not send'); },
+      sentPath, pendingPath, logger: quiet,
     });
     assert.equal(result.status, 'skipped-no-facts');
-    assert.equal(sentCalled, false);
-    assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), []);
+    assert.equal(await exists(pendingPath), false);
+  });
+});
+
+describe('sendApproved (approve=true)', () => {
+  it('sends pending draft, records id, removes pending.json', async () => {
+    await writeFile(pendingPath, JSON.stringify({ movie, facts }), 'utf8');
+    let sentArgs = null;
+    const result = await runAll({
+      approve: true,
+      sendFn: async (m, f) => { sentArgs = [m, f]; return { sent: 2, failed: 0 }; },
+      sentPath, pendingPath, logger: quiet,
+    });
+    assert.equal(result.status, 'sent');
+    assert.deepEqual(sentArgs, [movie, facts]);
+    assert.deepEqual(JSON.parse(await readFile(sentPath, 'utf8')), [11]);
+    assert.equal(await exists(pendingPath), false);
+  });
+
+  it('sendApproved helper is exported and behaves the same', async () => {
+    await writeFile(pendingPath, JSON.stringify({ movie, facts }), 'utf8');
+    const result = await sendApproved({ sendFn: async () => ({ sent: 1, failed: 0 }), sentPath, pendingPath, logger: quiet });
+    assert.equal(result.status, 'sent');
+  });
+
+  it('approve with no pending draft throws clearly', async () => {
+    await assert.rejects(
+      () => runAll({ approve: true, sendFn: async () => ({}), sentPath, pendingPath, logger: quiet }),
+      /no pending draft/i,
+    );
   });
 
   it('does not duplicate an id already in sent.json', async () => {
