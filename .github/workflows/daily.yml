@@ -65,6 +65,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/sent.json data/pending.json
+          git add -A data/
           git diff --cached --quiet || git commit -m "chore: update newsletter state for $(date -u +%F)"
           git pull --rebase && git push

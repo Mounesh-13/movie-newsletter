@@ -74,6 +74,35 @@ describe('getFacts', () => {
     assert.ok(geminiPrompt.includes(sampleMovie.overview));
   });
 
+  it('retries once on transient Gemini 5xx then succeeds', async () => {
+    process.env.GEMINI_API_KEY = 'fake-key-for-test';
+    const urls = [];
+    let calls = 0;
+    const fetchFn = async (url) => {
+      urls.push(url);
+      if (url.includes('wikipedia.org')) return jsonResponse({ extract: 'Wiki.' });
+      calls++;
+      if (calls === 1) return { ok: false, status: 503, json: async () => ({}) };
+      return jsonResponse({ candidates: [{ content: { parts: [{ text: '["x", "y", "z"]' }] } }] });
+    };
+    const facts = await getFacts(sampleMovie, { fetchFn });
+    assert.deepEqual(facts, ['x', 'y', 'z']);
+  });
+
+  it('calls a model that exists (gemini-2.5-flash), not the removed 2.0-flash', async () => {
+    process.env.GEMINI_API_KEY = 'fake-key-for-test';
+    const urls = [];
+    const fetchFn = async (url) => {
+      urls.push(url);
+      if (url.includes('wikipedia.org')) return jsonResponse({ extract: 'Wiki.' });
+      return jsonResponse({ candidates: [{ content: { parts: [{ text: '["a", "b", "c"]' }] } }] });
+    };
+    await getFacts(sampleMovie, { fetchFn });
+    const geminiUrl = urls.find((u) => u.includes('generativelanguage'));
+    assert.ok(geminiUrl.includes('gemini-2.5-flash'), geminiUrl);
+    assert.ok(!geminiUrl.includes('gemini-2.0-flash'));
+  });
+
   it('retries Gemini once when first response is not valid JSON', async () => {
     process.env.GEMINI_API_KEY = 'fake-key-for-test';
     let calls = 0;

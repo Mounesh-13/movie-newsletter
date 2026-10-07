@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 dotenv.config();
 
 const WIKI_BASE = 'https://en.wikipedia.org/api/rest_v1/page/summary';
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 export function buildPrompt(title, year, combinedText, strict = false) {
   const base =
@@ -79,24 +79,33 @@ function parseFactsText(text) {
 
 async function callGemini(apiKey, prompt, fetchFn = fetch, model = DEFAULT_MODEL) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  let res;
-  try {
-    res = await fetchFn(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7 },
-      }),
-    });
-  } catch (err) {
-    throw new Error(`Gemini request failed: ${err.message}`);
-  }
-  if (!res.ok) {
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.7 },
+  });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res;
+    try {
+      res = await fetchFn(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+    } catch (err) {
+      throw new Error(`Gemini request failed: ${err.message}`);
+    }
+    if (res.ok) {
+      const data = await res.json();
+      return extractGeminiText(data);
+    }
+    // Retry once on transient rate-limit/overload; fail fast otherwise
+    // (e.g. 404 = unknown model, 400 = bad request — retrying is pointless).
+    if ((res.status === 429 || res.status >= 500) && attempt === 0) {
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
     throw new Error(`Gemini request failed: HTTP ${res.status}`);
   }
-  const data = await res.json();
-  return extractGeminiText(data);
 }
 
 export async function getFacts(movie, { fetchFn = fetch, model = DEFAULT_MODEL } = {}) {
