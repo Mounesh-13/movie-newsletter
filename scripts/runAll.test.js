@@ -107,8 +107,8 @@ describe('sendApproved (approve=true)', () => {
     );
   });
 
-  it('blocker 4: zero delivery keeps pending.json, records nothing', async () => {
-    for (const zeroResult of [{ sent: 0, failed: 2 }, { sent: 0, failed: 0 }]) {
+  it('incomplete delivery keeps pending.json, records nothing', async () => {
+    for (const zeroResult of [{ sent: 0, failed: 2 }, { sent: 0, failed: 0 }, { sent: 1, failed: 1 }]) {
       await writeFile(pendingPath, JSON.stringify({ movie, facts }), 'utf8');
       await writeFile(sentPath, '[]', 'utf8');
       const result = await runAll({
