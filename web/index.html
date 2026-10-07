@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On This Day in Film — one movie, three facts, daily at 6 PM</title>
+<meta name="description" content="A daily email about one movie released on this date in history, with 3 lesser-known facts. Free, one email a day at 6 PM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <p class="kicker">A daily movie newsletter</p>
+    <h1>One movie. Three facts.<br>Every evening at 6.</h1>
+    <p class="lede">A daily email about one film released on this date in history. No endless lists to scroll.</p>
+    <form id="signup" class="signup" novalidate>
+      <label for="email">Email address</label>
+      <div class="row">
+        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <button type="submit" id="submitBtn">Subscribe</button>
+      </div>
+      <p id="formMsg" class="msg" role="status" aria-live="polite"></p>
+    </form>
+  </header>
+
+  <section class="sample" aria-label="Example daily email">
+    <h2>Tomorrow's email could look like this</h2>
+    <article class="email-card">
+      <p class="email-kicker">Today's Pick</p>
+      <h3>Jurassic Park</h3>
+      <p class="email-meta">1993 &middot; released on this day in history</p>
+      <hr>
+      <p class="email-sub">3 lesser-known facts:</p>
+      <ol>
+        <li>The T. rex roar was stitched together from tiger, alligator, and baby elephant sounds.</li>
+        <li>Steven Spielberg shot most of the film while editing Schindler's List in Poland at night.</li>
+        <li>The movie's CGI — barely six minutes of it — changed how every blockbuster since gets made.</li>
+      </ol>
+      <hr>
+      <p class="email-foot">Movie data via TMDB and Wikipedia.</p>
+    </article>
+  </section>
+
+  <section class="how" aria-label="How it works">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>We pick one film</strong><span>released on today's date in a past year, ranked by audience love.</span></li>
+      <li><strong>We dig up three facts</strong><span>the kind you repeat at dinner, drawn from Wikipedia and film history.</span></li>
+      <li><strong>You get one short email</strong><span>at 6 PM. Read it in a minute, unsubscribe anytime.</span></li>
+    </ol>
+  </section>
+
+  <footer class="foot">
+    <p>On This Day in Film &middot; one email a day, free forever.</p>
+  </footer>
+</main>
+<script src="/app.js" defer></script>
+</body>
+</html>

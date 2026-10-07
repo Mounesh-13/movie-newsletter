@@ -1,0 +1,123 @@
+:root {
+  --paper: #fafaf7;
+  --ink: #161614;
+  --muted: #57534e;
+  --accent: #b91c1c;
+  --accent-dark: #991b1b;
+  --border: #e7e2d9;
+  --card: #ffffff;
+  --error: #b91c1c;
+  --ok: #166534;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Public Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { max-width: 1080px; margin: 0 auto; padding: 0 24px 64px; }
+
+/* Hero — left aligned, fits first viewport */
+.hero { padding: 72px 0 56px; max-width: 640px; }
+.kicker {
+  margin: 0 0 16px;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+}
+.hero h1 {
+  font-family: "Libre Bodoni", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+}
+.lede { margin: 0 0 28px; font-size: 1.1rem; color: var(--muted); max-width: 34ch; }
+
+/* Form — label above input, error below */
+.signup label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.signup .row { display: flex; gap: 12px; }
+.signup input {
+  flex: 1; min-width: 0;
+  font: inherit; font-size: 16px;
+  padding: 13px 16px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); color: var(--ink);
+}
+.signup input::placeholder { color: #a8a29e; }
+.signup input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.signup button {
+  font: inherit; font-weight: 600; font-size: 16px; white-space: nowrap;
+  padding: 13px 28px;
+  border: none; border-radius: 10px;
+  background: var(--accent); color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.signup button:hover { background: var(--accent-dark); }
+.signup button:active { transform: scale(0.98); }
+.signup button:disabled { opacity: 0.6; cursor: wait; }
+.signup button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.msg { margin: 12px 0 0; font-size: 15px; min-height: 1.6em; }
+.msg.error { color: var(--error); }
+.msg.ok { color: var(--ok); font-weight: 600; }
+
+/* Sample email card */
+.sample { padding: 16px 0 56px; }
+.sample h2, .how h2 {
+  font-family: "Libre Bodoni", Georgia, serif;
+  font-size: 1.7rem; font-weight: 600; margin: 0 0 24px;
+}
+.email-card {
+  background: var(--card);
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 36px 36px 28px;
+  max-width: 600px;
+  box-shadow: 0 1px 2px rgba(22, 22, 20, 0.05), 0 12px 32px -12px rgba(22, 22, 20, 0.12);
+}
+.email-kicker { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #78716c; }
+.email-card h3 { font-family: "Libre Bodoni", Georgia, serif; font-size: 1.9rem; margin: 0 0 4px; }
+.email-meta { margin: 0 0 20px; font-size: 15px; color: #78716c; }
+.email-card hr { border: none; border-top: 1px solid var(--border); margin: 0 0 20px; }
+.email-sub { margin: 0 0 12px; font-weight: 600; }
+.email-card ol { margin: 0 0 20px; padding-left: 22px; }
+.email-card li { margin-bottom: 10px; }
+.email-foot { margin: 0; font-size: 13px; color: #a8a29e; }
+
+/* How it works — divided rows, not cards */
+.steps { list-style: none; margin: 0; padding: 0; max-width: 640px; }
+.steps li {
+  display: grid; grid-template-columns: 32px 1fr; gap: 16px;
+  padding: 20px 0; border-top: 1px solid var(--border);
+  counter-increment: step;
+}
+.steps li:last-child { border-bottom: 1px solid var(--border); }
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font-size: 14px; font-weight: 600; color: var(--accent);
+  padding-top: 4px;
+}
+.steps { counter-reset: step; }
+.steps strong { display: block; font-size: 1.05rem; }
+.steps span { color: var(--muted); }
+
+.foot { padding-top: 56px; font-size: 14px; color: #a8a29e; }
+
+@media (max-width: 560px) {
+  .hero { padding: 48px 0 40px; }
+  .signup .row { flex-direction: column; }
+  .signup button { width: 100%; }
+  .email-card { padding: 24px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup button { transition: none; }
+}
