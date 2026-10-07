@@ -40,6 +40,10 @@ edit the `sample` object at the bottom of `scripts/getFacts.js`, run, then rever
 > Without the flag it sends to the **entire audience**.
 
 - [ ] `node scripts/sendEmail.js --test=myemail@example.com` → success log, exit 0.
+- [ ] Pre-send inspection (no inbox needed): `node scripts/sendEmail.js --test=myemail@example.com --dry-run`
+      logs the exact JSON body with zero network calls. Confirm the `{{{RESEND_UNSUBSCRIBE_URL}}}`
+      tag is spelled correctly — it will be literal here by necessity (substitution, if any,
+      happens on Resend's servers at send time, so dry-run cannot prove substitution).
 - [ ] Email arrives; renders well on desktop AND a mobile client.
 - [ ] Unsubscribe check (template now uses the docs-verified `{{{RESEND_UNSUBSCRIBE_URL}}}`):
   - [ ] Gmail → Show original → confirm what `List-Unsubscribe` headers (if any) are present.

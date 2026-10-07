@@ -55,6 +55,16 @@ export function parseTestEmail(argv = process.argv) {
   return flag ? flag.slice('--test='.length) : null;
 }
 
+export function parseDryRun(argv = process.argv) {
+  return argv.includes('--dry-run');
+}
+
+// Exact JSON body sent to POST /emails for a single recipient.
+// Pure (no network) — also powers --dry-run inspection.
+export function buildTestPayload({ from, subject, html, email }) {
+  return { from, to: [email], subject, html };
+}
+
 // Blocker 1+3: fail closed — every required var must be present and non-empty
 // before anything touches the network. Names exactly which one is missing.
 const REQUIRED_SEND_VARS = ['RESEND_API_KEY', 'RESEND_AUDIENCE_ID', 'RESEND_FROM'];
@@ -135,7 +145,7 @@ async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
   const res = await fetchFn('https://api.resend.com/emails', {
     method: 'POST',
     headers: authHeaders(apiKey),
-    body: JSON.stringify({ from, to: [email], subject, html }),
+    body: JSON.stringify(buildTestPayload({ from, subject, html, email })),
   });
   if (!res.ok) throw new Error(`Send to ${email} failed: HTTP ${res.status}`);
 }
@@ -201,9 +211,6 @@ const isDirectRun = (() => {
 
 if (isDirectRun) {
   try {
-    // Blocker 1: validate config AND require --test up front — a bare
-    // `node scripts/sendEmail.js` must never reach the real audience.
-    requireSendConfig();
     const testEmail = requireTestEmail(parseTestEmail());
     const sampleMovie = { title: 'Jurassic Park', release_date: '1993-06-11' };
     const sampleFacts = [
@@ -211,7 +218,32 @@ if (isDirectRun) {
       'The film used pioneering CGI alongside life-size animatronics built by Stan Winston’s crew.',
       'It became the highest-grossing film ever at release, holding the record for four years.',
     ];
-    await sendDailyEmail(sampleMovie, sampleFacts, { testEmail });
+    if (parseDryRun()) {
+      // Inspection only: zero network calls, works without env keys
+      // (unset values shown as placeholders). Secret is never printed.
+      const year = sampleMovie.release_date.slice(0, 4);
+      const report = {
+        dryRun: true,
+        note: 'Payload that WOULD be sent. Tag substitution (if any) happens on Resend servers at send time, so the tag below is literal by necessity — this cannot prove substitution.',
+        request: {
+          url: 'https://api.resend.com/emails',
+          method: 'POST',
+          headers: { Authorization: 'Bearer [REDACTED]', 'Content-Type': 'application/json' },
+          body: buildTestPayload({
+            from: process.env.RESEND_FROM || '[RESEND_FROM not set]',
+            subject: `Today's Pick: ${sampleMovie.title} (${year})`,
+            html: buildEmailHtml(sampleMovie, sampleFacts),
+            email: testEmail,
+          }),
+        },
+      };
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      // Blocker 1: validate config AND require --test up front — a bare
+      // `node scripts/sendEmail.js` must never reach the real audience.
+      requireSendConfig();
+      await sendDailyEmail(sampleMovie, sampleFacts, { testEmail });
+    }
   } catch (err) {
     console.error(`Error: ${err.message}`);
     process.exit(1);

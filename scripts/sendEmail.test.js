@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 // RED gate: fails until sendEmail.js exists
-import { buildEmailHtml, parseTestEmail, sendDailyEmail, getSubscribers, requireSendConfig, requireTestEmail } from './sendEmail.js';
+import { buildEmailHtml, parseTestEmail, parseDryRun, buildTestPayload, sendDailyEmail, getSubscribers, requireSendConfig, requireTestEmail } from './sendEmail.js';
 
 const movie = { title: 'Jurassic Park', release_date: '1993-06-11' };
 const facts = ['Fact one.', 'Fact two.', 'Fact three.'];
@@ -50,6 +50,25 @@ describe('parseTestEmail', () => {
   });
   it('returns null when flag is absent', () => {
     assert.equal(parseTestEmail(['node', 'sendEmail.js']), null);
+  });
+});
+
+describe('--dry-run payload', () => {
+  it('detects the --dry-run flag', () => {
+    assert.equal(parseDryRun(['node', 'sendEmail.js', '--test=a@b.com', '--dry-run']), true);
+    assert.equal(parseDryRun(['node', 'sendEmail.js', '--test=a@b.com']), false);
+  });
+
+  it('builds the exact single-send body with no network involved', () => {
+    const html = buildEmailHtml(movie, facts);
+    const body = buildTestPayload({ from: 'News <news@example.com>', subject: 'S', html, email: 'me@x.com' });
+    assert.deepEqual(Object.keys(body).sort(), ['from', 'html', 'subject', 'to']);
+    assert.deepEqual(body.to, ['me@x.com']);
+    assert.equal(body.from, 'News <news@example.com>');
+    // Documents current truth: no List-Unsubscribe headers are sent (see report).
+    assert.ok(!('headers' in body));
+    // And the tag is literal pre-send — substitution (if any) happens server-side.
+    assert.match(body.html, /\{\{\{RESEND_UNSUBSCRIBE_URL\}\}\}/);
   });
 });
 
