@@ -31,6 +31,13 @@ permissions:
 jobs:
   send:
     runs-on: ubuntu-latest
+    env:
+      EMAIL_PROVIDER: ${{ vars.EMAIL_PROVIDER || 'resend' }}
+      NEWSLETTER_CONTACT_SOURCE: ${{ vars.NEWSLETTER_CONTACT_SOURCE }}
+      GMAIL_USER: ${{ secrets.GMAIL_USER }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 

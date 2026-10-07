@@ -24,17 +24,17 @@ export default async function handler(req, res, { fetchFn = fetch } = {}) {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  // RESEND_AUDIENCE_ID is optional: when set, the contact joins that
-  // segment; when blank, a plain global contact is created (Resend's
-  // Audiences page no longer shows it — create a Segment to get an ID).
+  const apiKey = (process.env.RESEND_API_KEY || '').trim();
+  // Require a segment unless the operator explicitly uses the entire account
+  // as this newsletter's list (Gmail mode). Never silently widen the audience.
   const audienceId = (process.env.RESEND_AUDIENCE_ID || '').trim();
-  if (!apiKey) {
+  const allContacts = process.env.NEWSLETTER_CONTACT_SOURCE === 'all';
+  if (!apiKey || (!audienceId && !allContacts)) {
     return res.status(500).json({ error: 'Subscription service is not configured. Please try again later.' });
   }
 
   const contactBody = { email, unsubscribed: false };
-  if (audienceId) contactBody.segments = [{ id: audienceId }];
+  if (!allContacts) contactBody.segments = [{ id: audienceId }];
 
   let apiRes;
   try {

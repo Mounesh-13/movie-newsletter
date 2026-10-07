@@ -287,3 +287,66 @@ describe('blocker 2: no global-contacts fallback', () => {
     restoreEnv();
   });
 });
+
+describe('delivery to friends', () => {
+  it('rejects sandbox audience sends before making any API calls', async () => {
+    try {
+      process.env.RESEND_API_KEY = 'fake';
+      process.env.RESEND_AUDIENCE_ID = 'segment_123';
+      for (const from of ['onboarding@resend.dev', 'Movie Newsletter <onboarding@RESEND.DEV>']) {
+        process.env.RESEND_FROM = from;
+        let calls = 0;
+        await assert.rejects(() => sendDailyEmail(movie, facts, {
+          fetchFn: async () => { calls++; throw new Error('must not call'); },
+        }), /verified domain.*account owner/);
+        assert.equal(calls, 0);
+      }
+    } finally { restoreEnv(); }
+  });
+
+  it('still allows a sandbox test email to the owner', async () => {
+    try {
+      process.env.RESEND_API_KEY = 'fake';
+      process.env.RESEND_FROM = 'onboarding@resend.dev';
+      const result = await sendDailyEmail(movie, facts, {
+        testEmail: 'owner@example.com',
+        fetchFn: async (url, opts) => {
+          assert.equal(url, 'https://api.resend.com/emails');
+          assert.deepEqual(JSON.parse(opts.body).to, ['owner@example.com']);
+          return { ok: true };
+        },
+      });
+      assert.equal(result.sent, 1);
+    } finally { restoreEnv(); }
+  });
+
+  it('broadcasts to the configured newsletter segment, not just the owner', async () => {
+    try {
+      process.env.RESEND_API_KEY = 'fake';
+      process.env.RESEND_AUDIENCE_ID = 'segment_friends';
+      process.env.RESEND_FROM = 'Movies <news@example.com>';
+      let broadcasts = 0;
+      const result = await sendDailyEmail(movie, facts, {
+        fetchFn: async (url, opts) => {
+          if (url.endsWith('/contacts')) {
+            assert.ok(url.includes('segment_friends'));
+            return { ok: true, json: async () => ({ data: [
+              { email: 'owner@example.com', unsubscribed: false },
+              { email: 'friend@example.com', unsubscribed: false },
+              { email: 'unsubscribed@example.com', unsubscribed: true },
+            ] }) };
+          }
+          assert.equal(url, 'https://api.resend.com/broadcasts');
+          const payload = JSON.parse(opts.body);
+          assert.equal(payload.segment_id, 'segment_friends');
+          assert.equal(payload.send, true);
+          assert.ok(!('to' in payload));
+          broadcasts++;
+          return { ok: true, json: async () => ({ id: 'broadcast_friends' }) };
+        },
+      });
+      assert.equal(broadcasts, 1);
+      assert.equal(result.sent, 2);
+    } finally { restoreEnv(); }
+  });
+});

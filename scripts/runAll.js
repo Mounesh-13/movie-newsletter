@@ -107,15 +107,15 @@ export async function sendApproved({
   }
 
   const sendResult = await sendFn(movie, facts);
-  if (sendResult.sent === 0) {
-    logger.error(`Error: delivery count is 0 (failed ${sendResult.failed}). NOT recording id; draft kept for retry.`);
+  if (sendResult.sent === 0 || sendResult.failed > 0) {
+    logger.error(`Error: send incomplete (${sendResult.sent} accepted, ${sendResult.failed} failed). NOT recording id; draft kept for retry.`);
     return { status: 'skipped-send-failed', movie, facts, sendResult, timestamp: new Date().toISOString() };
   }
   await recordSentId(sentPath, movie.id);
   await rm(pendingPath, { force: true });
 
   const timestamp = new Date().toISOString();
-  logger.log(`Summary: sent "${movie.title}" (TMDB id ${movie.id}) at ${timestamp}. Result: ${sendResult.sent} delivered, ${sendResult.failed} failed.`);
+  logger.log(`Summary: sent "${movie.title}" (TMDB id ${movie.id}) at ${timestamp}. Result: ${sendResult.sent} accepted, ${sendResult.failed} failed.`);
   return { status: 'sent', movie, facts, sendResult, timestamp };
 }
 

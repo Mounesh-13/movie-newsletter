@@ -12,6 +12,7 @@ function mockRes() {
 }
 
 beforeEach(() => {
+  delete process.env.NEWSLETTER_CONTACT_SOURCE;
   process.env.RESEND_API_KEY = 'fake-key';
   process.env.RESEND_AUDIENCE_ID = 'aud_123';
 });
@@ -64,17 +65,43 @@ describe('POST /api/subscribe', () => {
     assert.match(res.body.error, /could not subscribe/i);
   });
 
-  it('works with blank audience ID (creates global contact, no segments key)', async () => {
+  it('rejects missing or blank segment configuration without creating an orphan contact', async () => {
+    for (const value of [undefined, '', '   ']) {
+      if (value === undefined) delete process.env.RESEND_AUDIENCE_ID;
+      else process.env.RESEND_AUDIENCE_ID = value;
+      const res = mockRes();
+      await handler({ method: 'POST', body: { email: 'fan@example.com' } }, res, {
+        fetchFn: async () => { throw new Error('must not call'); },
+      });
+      assert.equal(res.statusCode, 500);
+      assert.match(res.body.error, /not configured/);
+    }
+  });
+
+  it('allows global signups only with explicit all-newsletter-contacts configuration', async () => {
+    process.env.NEWSLETTER_CONTACT_SOURCE = 'all';
     delete process.env.RESEND_AUDIENCE_ID;
-    let sentBody = null;
-    const fetchFn = async (url, opts) => {
-      sentBody = JSON.parse(opts.body);
-      return { ok: true, json: async () => ({ id: 'contact-1' }) };
-    };
+    try {
+      const res = mockRes();
+      await handler({ method: 'POST', body: { email: 'friend@example.com' } }, res, {
+        fetchFn: async (url, opts) => {
+          assert.deepEqual(JSON.parse(opts.body), { email: 'friend@example.com', unsubscribed: false });
+          return { ok: true };
+        },
+      });
+      assert.equal(res.statusCode, 200);
+    } finally { delete process.env.NEWSLETTER_CONTACT_SOURCE; }
+  });
+
+  it('trims the configured segment ID', async () => {
+    process.env.RESEND_AUDIENCE_ID = '  segment_123  ';
     const res = mockRes();
-    await handler({ method: 'POST', body: { email: 'fan@example.com' } }, res, { fetchFn });
+    await handler({ method: 'POST', body: { email: 'fan@example.com' } }, res, {
+      fetchFn: async (url, opts) => {
+        assert.deepEqual(JSON.parse(opts.body).segments, [{ id: 'segment_123' }]);
+        return { ok: true };
+      },
+    });
     assert.equal(res.statusCode, 200);
-    assert.equal(sentBody.email, 'fan@example.com');
-    assert.ok(!('segments' in sentBody));
   });
 });

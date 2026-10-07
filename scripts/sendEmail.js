@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { gmailConfig, sendGmail } from './gmail.js';
 import { pathToFileURL } from 'node:url';
 
 dotenv.config();
@@ -97,6 +98,30 @@ function extractEmails(data) {
   return list.filter((c) => !c.unsubscribed && c.email).map((c) => c.email);
 }
 
+// An explicit all-contacts setting is intended ONLY for a Resend account
+// dedicated to this newsletter. Never widen a failed segment lookup.
+export async function getAllNewsletterSubscribers({ fetchFn = fetch, apiKey = process.env.RESEND_API_KEY } = {}) {
+  if (!apiKey?.trim()) throw new Error('RESEND_API_KEY is required to read newsletter contacts.');
+  const emails = new Set();
+  const cursors = new Set();
+  let after = '';
+  do {
+    const url = new URL('https://api.resend.com/contacts');
+    url.searchParams.set('limit', '100');
+    if (after) url.searchParams.set('after', after);
+    const res = await fetchFn(url.href, { headers: authHeaders(apiKey) });
+    if (!res.ok) throw new Error(`Failed to read newsletter contacts: HTTP ${res.status}`);
+    const page = await res.json();
+    if (!Array.isArray(page.data)) throw new Error('Invalid contacts response');
+    for (const email of extractEmails(page)) emails.add(email.trim().toLowerCase());
+    if (!page.has_more) break;
+    after = page.data.at(-1)?.id;
+    if (!after || cursors.has(after)) throw new Error('Invalid contacts pagination');
+    cursors.add(after);
+  } while (true);
+  return [...emails];
+}
+
 // Audiences API is deprecated in favor of Segments (Nov 2025), so try the
 // legacy path first, then segments. Blocker 2: there is deliberately NO
 // fallback to the unscoped global /contacts list — emailing every contact
@@ -135,12 +160,22 @@ export function buildBroadcastPayload({ segmentId, from, subject, html, name }) 
   return { segment_id: segmentId, from, subject, html, name, send: true };
 }
 
+// Resend's sandbox sender can only email the account owner, not subscribers.
+export function requireBroadcastSender(from) {
+  const address = String(from || '').trim().match(/<([^<>]+)>\s*$/)?.[1]
+    ?? String(from || '').trim();
+  if (!address || /@resend\.dev$/i.test(address.trim())) {
+    throw new Error('Audience delivery requires RESEND_FROM on a verified domain. Resend test senders (@resend.dev) only deliver to the account owner. Verify your domain in Resend and set RESEND_FROM in GitHub Actions and your local .env.');
+  }
+}
+
 // Audience sends go ONLY here, explicitly scoped to the segment ID.
 // There is no global/default recipient list — a bad ID fails loudly.
 export async function sendBroadcast({ fetchFn = fetch, apiKey, audienceId, from, subject, html, name }) {
   if (!audienceId) {
     throw new Error('RESEND_AUDIENCE_ID is missing. Add it to your local .env file (see .env.example).');
   }
+  requireBroadcastSender(from);
   const res = await fetchFn('https://api.resend.com/broadcasts', {
     method: 'POST',
     headers: authHeaders(apiKey),
@@ -162,6 +197,19 @@ async function sendOne({ fetchFn, apiKey, from, subject, html, email }) {
 }
 
 export async function sendDailyEmail(movie, facts, { fetchFn = fetch, testEmail = null, from = process.env.RESEND_FROM } = {}) {
+  const provider = (process.env.EMAIL_PROVIDER || 'resend').trim();
+  if (!['gmail', 'resend'].includes(provider)) throw new Error('EMAIL_PROVIDER must be gmail or resend.');
+  if (provider === 'gmail') {
+    const cfg = gmailConfig();
+    if (!movie || !Array.isArray(facts) || facts.length !== 3) throw new Error('sendDailyEmail requires a movie and exactly 3 facts.');
+    const recipients = testEmail ? [testEmail] : process.env.NEWSLETTER_CONTACT_SOURCE === 'all'
+      ? await getAllNewsletterSubscribers({ fetchFn })
+      : await getSubscribers({ fetchFn });
+    const unsubscribeUrl = `mailto:${cfg.GMAIL_USER}?subject=Unsubscribe%20movie%20newsletter`;
+    const html = buildEmailHtml(movie, facts, { unsubscribeUrl }).replace('>Unsubscribe</a>', '>Request unsubscribe by email</a>');
+    return sendGmail({ recipients, subject: `Today's Pick: ${movie.title} (${(movie.release_date || '').slice(0, 4)})`,
+      html, deliveryKey: String(movie.id ?? `${movie.title}:${movie.release_date}`), test: Boolean(testEmail), fetchFn });
+  }
   // --test path: Broadcasts has NO ad-hoc single recipient (segment sends
   // only), so test sends stay on raw /emails — unsubscribe compliance
   // doesn't apply to a test mail to yourself. Hence the two paths differ.
@@ -183,6 +231,7 @@ export async function sendDailyEmail(movie, facts, { fetchFn = fetch, testEmail 
   // Audience path: full config required — sending without a scoped
   // audience ID is never allowed.
   const full = requireSendConfig();
+  requireBroadcastSender(from);
   const subscribers = await getSubscribers({ fetchFn, apiKey: full.apiKey, audienceId: full.audienceId });
   if (subscribers.length === 0) {
     console.log('No active subscribers found. Nothing to send.');
@@ -214,7 +263,9 @@ if (isDirectRun) {
       'The film used pioneering CGI alongside life-size animatronics built by Stan Winston’s crew.',
       'It became the highest-grossing film ever at release, holding the record for four years.',
     ];
-    if (parseDryRun()) {
+    if (parseDryRun() && process.env.EMAIL_PROVIDER === 'gmail') {
+      console.log(JSON.stringify({ dryRun: true, provider: 'gmail', to: testEmail, note: 'No requests made. OAuth setup: GMAIL_SETUP.md' }));
+    } else if (parseDryRun()) {
       // Inspection only: zero network calls, works without env keys
       // (unset values shown as placeholders). Secret is never printed.
       const year = sampleMovie.release_date.slice(0, 4);
@@ -252,7 +303,7 @@ if (isDirectRun) {
       // Fail closed: validate the vars the --test path needs AND require
       // --test up front — a bare run must never reach the real audience.
       // RESEND_AUDIENCE_ID is not needed here (test sends bypass it).
-      requireSendConfig(process.env, ['RESEND_API_KEY', 'RESEND_FROM']);
+      if (process.env.EMAIL_PROVIDER !== 'gmail') requireSendConfig(process.env, ['RESEND_API_KEY', 'RESEND_FROM']);
       await sendDailyEmail(sampleMovie, sampleFacts, { testEmail });
     }
   } catch (err) {
