@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 9912,
-    "title": "The World's Fastest Indian",
-    "release_date": "2005-10-12",
-    "vote_average": 7.674,
-    "vote_count": 936,
-    "overview": "The life story of New Zealander Burt Munro, who spent years building a 1920 Indian motorcycle—a bike which helped him set the land-speed world record at Utah's Bonneville Salt Flats in 1967.",
-    "score": 82.68255169747621
+    "id": 277834,
+    "title": "Moana",
+    "release_date": "2016-10-13",
+    "vote_average": 7.566,
+    "vote_count": 14088,
+    "overview": "In Ancient Polynesia, when a terrible curse incurred by Maui reaches an impetuous Chieftain's daughter's island, she answers the Ocean's call to seek out the demigod to set things right.",
+    "score": 88.95769868591844
   },
   "facts": [
-    "Did you know the star of the film isn't just any old bike? It's Burt Munro's incredibly special, highly modified 1920 Indian Scout motorcycle that takes center stage!",
-    "Burt Munro's speed records weren't just general achievements; he specifically dominated the category for motorcycles with engines less than 1,000 cc. Talk about precision racing!",
-    "Roger Donaldson really poured his heart into this film! He didn't just direct 'The World's Fastest Indian,' he also took on the roles of producer and writer, making it a truly personal vision."
+    "Did you know the big terrible curse that kicks off Moana's adventure was actually *incurred* by the demigod Maui himself? Talk about creating your own problems!",
+    "Our brave hero, Moana, isn't just any protagonist; she's specifically described as an 'impetuous Chieftain's daughter.' This gives us a fun insight into her spirited nature right away.",
+    "Moana doesn't just decide to go on a quest; she actually *answers the Ocean's call* directly! This unique connection is what truly drives her to seek out the demigod and restore balance."
   ],
-  "preparedAt": "2026-10-12T21:22:49.566Z"
+  "preparedAt": "2026-10-13T19:28:20.244Z"
 }
