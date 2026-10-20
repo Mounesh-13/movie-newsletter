@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 1124,
-    "title": "The Prestige",
-    "release_date": "2006-10-19",
-    "vote_average": 8.212,
-    "vote_count": 18304,
-    "overview": "A mysterious story of two magicians whose intense rivalry leads them on a life-long battle for supremacy -- full of obsession, deceit and jealousy with dangerous and deadly consequences.",
-    "score": 95.64509201422587
+    "id": 19404,
+    "title": "Dilwale Dulhania Le Jayenge",
+    "release_date": "1995-10-20",
+    "vote_average": 8.502,
+    "vote_count": 4635,
+    "overview": "Raj is a rich, carefree, happy-go-lucky second generation NRI. Simran is the daughter of Chaudhary Baldev Singh, who in spite of being an NRI is very strict about adherence to Indian values. Simran has left for India to be married to her childhood fiancé. Raj leaves for India with a mission at his hands, to claim his lady love under the noses of her whole family. Thus begins a saga.",
+    "score": 92.35209947696104
   },
   "facts": [
-    "Did you know the rivalry between the two magicians isn't just a simple spat? It's explicitly described as a \"life-long battle for supremacy,\" highlighting the incredible depth of their obsession to outdo each other!",
-    "The story delves much deeper than just magic tricks, being \"full of obsession, deceit and jealousy.\" It promises a truly psychological and complex exploration of human nature.",
-    "This intense competition between the magicians leads to far more than just professional disagreements. The text hints at \"dangerous and deadly consequences,\" making it clear the stakes are incredibly high!"
+    "Here's a fun detail: Raj isn't just an NRI, he's specifically a *second-generation* one! This might explain his carefree, happy-go-lucky vibe.",
+    "Talk about an interesting character! Simran's father, Chaudhary Baldev Singh, is an NRI himself, yet he's incredibly strict about traditional Indian values.",
+    "Did you catch this? Simran is actually heading to India to marry her *childhood fiancé*. Raj certainly has his work cut out for him!"
   ],
-  "preparedAt": "2026-10-19T18:48:42.111Z"
+  "preparedAt": "2026-10-20T17:26:56.449Z"
 }
