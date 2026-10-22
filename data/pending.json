@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 374473,
-    "title": "I, Daniel Blake",
-    "release_date": "2016-10-21",
-    "vote_average": 7.708,
-    "vote_count": 1585,
-    "overview": "A 59-year-old carpenter recovering from a heart attack befriends a single mother and her two kids as they navigate the impersonal, Kafkaesque benefits system. With equal amounts of humour, warmth and despair, the journey is heartfelt and emotional until the end.",
-    "score": 88.48005853310754
+    "id": 142,
+    "title": "Brokeback Mountain",
+    "release_date": "2005-10-22",
+    "vote_average": 7.783,
+    "vote_count": 7783,
+    "overview": "In 1960s Wyoming, two men develop a strong emotional and sexual relationship that endures as a lifelong connection complicating their lives as they get married and start families of their own.",
+    "score": 85.61229406089754
   },
   "facts": [
-    "Did you know Daniel Blake, the titular character, isn't just a middle-aged man but specifically a 59-year-old carpenter? He's also recovering from a heart attack, which adds a crucial layer to his battle with the benefits system!",
-    "The film doesn't feature a typical villain; instead, its true antagonist is described as an 'impersonal, Kafkaesque benefits system.' That really paints a picture of the bureaucratic nightmare Daniel and Katie face!",
-    "Despite its heavy subject matter, the movie is noted for its unique tonal balance, featuring 'equal amounts of humour, warmth, and despair.' Sounds like it offers a full spectrum of emotions, not just gloom!"
+    "Did you know Brokeback Mountain started as a short story? It was adapted from Annie Proulx's 1997 work, giving it a rich literary foundation!",
+    "The powerful script was penned by a duo: Diana Ossana, who also produced the film, and the acclaimed writer Larry McMurtry. Talk about a dream team behind the words!",
+    "The film beautifully captures a love story spanning two decades! Specifically, the complex relationship between Ennis and Jack unfolds from 1963 all the way to 1983."
   ],
-  "preparedAt": "2026-10-21T17:34:56.026Z"
+  "preparedAt": "2026-10-22T17:31:45.622Z"
 }
