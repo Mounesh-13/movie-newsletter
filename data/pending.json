@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 142,
-    "title": "Brokeback Mountain",
-    "release_date": "2005-10-22",
-    "vote_average": 7.783,
-    "vote_count": 7783,
-    "overview": "In 1960s Wyoming, two men develop a strong emotional and sexual relationship that endures as a lifelong connection complicating their lives as they get married and start families of their own.",
-    "score": 85.61229406089754
+    "id": 242582,
+    "title": "Nightcrawler",
+    "release_date": "2014-10-23",
+    "vote_average": 7.708,
+    "vote_count": 12189,
+    "overview": "When Lou Bloom, desperate for work, muscles into the world of L.A. crime journalism, he blurs the line between observer and participant to become the star of his own story. Aiding him in his effort is Nina, a TV-news veteran.",
+    "score": 85.25193615409215
   },
   "facts": [
-    "Did you know Brokeback Mountain started as a short story? It was adapted from Annie Proulx's 1997 work, giving it a rich literary foundation!",
-    "The powerful script was penned by a duo: Diana Ossana, who also produced the film, and the acclaimed writer Larry McMurtry. Talk about a dream team behind the words!",
-    "The film beautifully captures a love story spanning two decades! Specifically, the complex relationship between Ennis and Jack unfolds from 1963 all the way to 1983."
+    "You might be interested to know that Lou Bloom isn't working alone in his intense L.A. crime journalism endeavors. He's actually aided by Nina, who is specifically described as a seasoned TV-news veteran!",
+    "Before Lou Bloom becomes entangled in the dark side of L.A. crime journalism, his initial drive is surprisingly simple: he's desperate for work! It's a stark beginning for such a complex character.",
+    "Lou Bloom takes his role in L.A. crime journalism to an unusual level, not just reporting but actively blurring the lines between watching and participating. This extreme approach eventually makes him the star of his very own narrative!"
   ],
-  "preparedAt": "2026-10-22T17:31:45.622Z"
+  "preparedAt": "2026-10-23T17:23:03.699Z"
 }
