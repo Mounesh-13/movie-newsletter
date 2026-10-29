@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 488,
-    "title": "The African Queen",
-    "release_date": "1951-10-28",
-    "vote_average": 7.3,
-    "vote_count": 1110,
-    "overview": "At the start of the First World War, in the middle of Africa’s nowhere, a gin soaked riverboat captain is persuaded by a strong-willed missionary to go down river and face-off a German warship.",
-    "score": 94.09064595757332
+    "id": 336,
+    "title": "Duck, You Sucker",
+    "release_date": "1971-10-29",
+    "vote_average": 7.663,
+    "vote_count": 1234,
+    "overview": "At the beginning of the 1913 Mexican Revolution, greedy bandit Juan Miranda and idealist John H. Mallory, an Irish Republican Army explosives expert on the lam from the British, fall in with a band of revolutionaries plotting to strike a national bank. When it turns out that the government has been using the bank as a hiding place for illegally detained political prisoners -- who are freed by the blast -- Miranda becomes a revolutionary hero against his will.",
+    "score": 82.81263031939444
   },
   "facts": [
-    "Did you know the screenplay for 'The African Queen' was a true collaborative effort? It had four credited writers: James Agee, director John Huston, John Collier, and Peter Viertel!",
-    "Beyond the famous director and stars, the film was brought to the screen by producers Sam Spiegel and John Woolf. It's also an adaptation of a C. S. Forester novel first published way back in 1935!",
-    "The film's stunning visuals were captured in Technicolor by cinematographer Jack Cardiff, a key behind-the-scenes talent. And setting the perfect mood was Allan Gray, who composed the film's music score."
+    "Did you know this film goes by a few different names? It's also known as 'A Fistful of Dynamite' and even 'Once Upon a Time ... the Revolution', hinting at its epic scope!",
+    "One of the main characters, John H. Mallory, has a surprisingly specific backstory: he's an Irish Republican Army explosives expert on the run from the British, finding himself caught up in the Mexican Revolution.",
+    "The revolutionaries' plan to strike a national bank takes an unexpected turn when they discover the government was secretly using it to hide illegally detained political prisoners, who are then freed by the blast!"
   ],
-  "preparedAt": "2026-10-28T18:27:36.971Z"
+  "preparedAt": "2026-10-29T18:37:06.000Z"
 }
