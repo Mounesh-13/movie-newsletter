@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 36557,
-    "title": "Casino Royale",
-    "release_date": "2006-11-14",
-    "vote_average": 7.6,
-    "vote_count": 12219,
-    "overview": "Le Chiffre, a banker to the world's terrorists, is scheduled to participate in a high-stakes poker game in Montenegro, where he intends to use his winnings to establish his financial grip on the terrorist market. M sends Bond—on his maiden mission as a 00 Agent—to attend this game and prevent Le Chiffre from winning. With the help of Vesper Lynd and Felix Leiter, Bond enters the most important poker game in his already dangerous career.",
-    "score": 89.17407132961132
+    "id": 2300,
+    "title": "Space Jam",
+    "release_date": "1996-11-15",
+    "vote_average": 6.805,
+    "vote_count": 6641,
+    "overview": "With their freedom on the line, the Looney Tunes seek the help of NBA superstar Michael Jordan to win a basketball game against a team of moronic aliens.",
+    "score": 85.69446696047768
   },
   "facts": [
-    "Did you know the villain Le Chiffre wasn't just any bad guy? He was specifically a banker for terrorists, planning to use his poker winnings to establish a financial grip on the terrorist market!",
-    "Believe it or not, this high-stakes mission to stop Le Chiffre was actually Bond's very first assignment as a 00 Agent! Talk about jumping straight into the deep end.",
-    "This wasn't just any poker game for Bond; the text explicitly states it was the most important one in his entire (already dangerous!) career. The stakes were truly personal for 007."
+    "Did you know Space Jam had a whole squad of writers? The script was penned by no less than four people: Leo Benvenuti, Steve Rudnick, Timothy Harris, and Herschel Weingrod. Talk about a collaborative effort!",
+    "Beyond Michael Jordan, the live-action cast featured some other familiar faces you might not immediately recall. For instance, Wayne Knight, famous for playing Newman in 'Seinfeld,' was also part of the human ensemble!",
+    "The invading aliens in Space Jam weren't just after world domination, they had a very specific, quirky plan for the Looney Tunes. Their goal was to enslave them and turn them into amusement park attractions!"
   ],
-  "preparedAt": "2026-11-14T18:25:42.228Z"
+  "preparedAt": "2026-11-15T19:02:45.338Z"
 }
