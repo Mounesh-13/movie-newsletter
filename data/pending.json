@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 2300,
-    "title": "Space Jam",
-    "release_date": "1996-11-15",
-    "vote_average": 6.805,
-    "vote_count": 6641,
-    "overview": "With their freedom on the line, the Looney Tunes seek the help of NBA superstar Michael Jordan to win a basketball game against a team of moronic aliens.",
-    "score": 85.69446696047768
+    "id": 671,
+    "title": "Harry Potter and the Philosopher's Stone",
+    "release_date": "2001-11-16",
+    "vote_average": 7.905,
+    "vote_count": 30640,
+    "overview": "Harry Potter has lived under the stairs at his aunt and uncle's house his whole life. But on his 11th birthday, he learns he's a powerful wizard—with a place waiting for him at the Hogwarts School of Witchcraft and Wizardry. As he learns to harness his newfound powers with the help of the school's kindly headmaster, Harry uncovers the truth about his parents' deaths—and about the villain who's to blame.",
+    "score": 98.02257752192114
   },
   "facts": [
-    "Did you know Space Jam had a whole squad of writers? The script was penned by no less than four people: Leo Benvenuti, Steve Rudnick, Timothy Harris, and Herschel Weingrod. Talk about a collaborative effort!",
-    "Beyond Michael Jordan, the live-action cast featured some other familiar faces you might not immediately recall. For instance, Wayne Knight, famous for playing Newman in 'Seinfeld,' was also part of the human ensemble!",
-    "The invading aliens in Space Jam weren't just after world domination, they had a very specific, quirky plan for the Looney Tunes. Their goal was to enslave them and turn them into amusement park attractions!"
+    "Did you know 'Harry Potter and the Philosopher's Stone' wasn't just the first book in the series, but it was also J.K. Rowling's very first published novel? What an incredible debut!",
+    "Our young wizard doesn't just figure out magic on his own; he gets essential help from the school's kindly headmaster to learn how to harness his newfound powers.",
+    "Beyond just learning spells, Harry and his friends Ron and Hermione are tasked with unraveling a complex mystery that directly involves the infamous dark wizard, Lord Voldemort."
   ],
-  "preparedAt": "2026-11-15T19:02:45.338Z"
+  "preparedAt": "2026-11-16T22:27:25.454Z"
 }
