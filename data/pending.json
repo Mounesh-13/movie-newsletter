@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 671,
-    "title": "Harry Potter and the Philosopher's Stone",
-    "release_date": "2001-11-16",
-    "vote_average": 7.905,
-    "vote_count": 30640,
-    "overview": "Harry Potter has lived under the stairs at his aunt and uncle's house his whole life. But on his 11th birthday, he learns he's a powerful wizard—with a place waiting for him at the Hogwarts School of Witchcraft and Wizardry. As he learns to harness his newfound powers with the help of the school's kindly headmaster, Harry uncovers the truth about his parents' deaths—and about the villain who's to blame.",
-    "score": 98.02257752192114
+    "id": 11216,
+    "title": "Cinema Paradiso",
+    "release_date": "1988-11-17",
+    "vote_average": 8.4,
+    "vote_count": 5058,
+    "overview": "A filmmaker recalls his childhood, when he fell in love with the movies at his village's theater and formed a deep friendship with the theater's projectionist.",
+    "score": 91.40795765001677
   },
   "facts": [
-    "Did you know 'Harry Potter and the Philosopher's Stone' wasn't just the first book in the series, but it was also J.K. Rowling's very first published novel? What an incredible debut!",
-    "Our young wizard doesn't just figure out magic on his own; he gets essential help from the school's kindly headmaster to learn how to harness his newfound powers.",
-    "Beyond just learning spells, Harry and his friends Ron and Hermione are tasked with unraveling a complex mystery that directly involves the infamous dark wizard, Lord Voldemort."
+    "The film's story unfolds as a filmmaker looks back on his own childhood, giving us a personal journey through his memories.",
+    "His lifelong passion for movies didn't just appear; it specifically bloomed right inside his village's very own theater.",
+    "A truly heartwarming and central part of his youth was the incredibly deep friendship he developed with the theater's projectionist."
   ],
-  "preparedAt": "2026-11-16T22:27:25.454Z"
+  "preparedAt": "2026-11-17T21:16:04.681Z"
 }
