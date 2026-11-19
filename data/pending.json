@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 9323,
-    "title": "Ghost in the Shell",
-    "release_date": "1995-11-18",
-    "vote_average": 7.932,
-    "vote_count": 4158,
-    "overview": "In the year 2029, the barriers of our world have been broken down by the net and by cybernetics, but this brings new vulnerability to humans in the form of brain-hacking. When a highly-wanted hacker known as 'The Puppetmaster' begins involving them in politics, Section 9, a group of cybernetically enhanced cops, are called in to investigate and stop the Puppetmaster.",
-    "score": 86.5577689699909
+    "id": 510,
+    "title": "One Flew Over the Cuckoo's Nest",
+    "release_date": "1975-11-19",
+    "vote_average": 8.4,
+    "vote_count": 11980,
+    "overview": "A petty criminal fakes insanity to serve his sentence in a mental ward rather than prison. He soon finds himself as a leader to the other patients—and an enemy to the cruel, domineering nurse who runs the ward.",
+    "score": 92.15691363610658
   },
   "facts": [
-    "Did you know the original manga, which the 1995 film adapts, was serialized from 1989 to 1991? That's a solid two-year run that laid the groundwork for the iconic movie!",
-    "In the movie's futuristic 2029, the widespread use of cybernetics and the net introduced a chilling new vulnerability for humans: brain-hacking! It's not just physical threats, but the very essence of your mind that's at risk.",
-    "The infamous hacker, 'The Puppetmaster,' isn't just a cybercriminal; they actively drag Section 9 into intricate political affairs. This adds a fascinating layer of political intrigue to their investigation!"
+    "Did you know the iconic 1975 film actually began as a 1962 novel penned by Ken Kesey? It's the original source of the unforgettable story!",
+    "Before the silver screen, the story of 'One Flew Over the Cuckoo's Nest' first hit the stage! There was a 1963 play adaptation, which set the groundwork for the famous movie.",
+    "And here's a fun tidbit about that 1963 stage version: none other than Hollywood legend Kirk Douglas starred in it! Imagine him bringing the character to life years before Jack Nicholson."
   ],
-  "preparedAt": "2026-11-18T20:50:18.177Z"
+  "preparedAt": "2026-11-19T20:54:47.370Z"
 }
