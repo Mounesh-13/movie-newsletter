@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 670,
-    "title": "Oldboy",
-    "release_date": "2003-11-21",
-    "vote_average": 8.232,
-    "vote_count": 10444,
-    "overview": "With no clue how he came to be imprisoned, drugged and tortured for 15 years, a desperate man seeks revenge on his captors.",
-    "score": 90.3577337263018
+    "id": 199,
+    "title": "Star Trek: First Contact",
+    "release_date": "1996-11-22",
+    "vote_average": 7.314,
+    "vote_count": 2081,
+    "overview": "The Borg, a relentless race of cyborgs, are on a direct course for Earth. Violating orders to stay away from the battle, Captain Picard and the crew of the newly-commissioned USS Enterprise E pursue the Borg back in time to prevent the invaders from changing Federation history and assimilating the galaxy.",
+    "score": 89.77654416042326
   },
   "facts": [
-    "Did you know the movie's title, 'Oldboy', isn't just a random pick? It actually refers to male former pupils of schools in Britain and several Commonwealth countries like Australia, Canada, and New Zealand!",
-    "Here's another cool fact about the title: 'Oldboy' can also specifically denote a cadet who has attended St. John's Military School. It's fascinating how much history is packed into that one word!",
-    "But beyond its intriguing title, the film itself tells the intense story of a desperate man mysteriously imprisoned, drugged, and tortured for 15 years, only to be released with a burning desire for revenge."
+    "Did you know that Jonathan Frakes, who plays Riker, actually directed 'First Contact'? This movie was his very first time directing a feature film!",
+    "While it features the beloved TNG crew, 'First Contact' was actually only their second big-screen adventure!",
+    "Did you realize the USS Enterprise-E was a brand new ship when the events of 'First Contact' unfolded? It was only newly-commissioned when it jumped into action!"
   ],
-  "preparedAt": "2026-11-21T19:41:20.976Z"
+  "preparedAt": "2026-11-22T19:55:43.732Z"
 }
