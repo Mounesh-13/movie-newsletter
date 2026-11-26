@@ -1,17 +1,17 @@
 {
   "movie": {
-    "id": 376290,
-    "title": "Miss Sloane",
-    "release_date": "2016-11-25",
-    "vote_average": 7.4,
-    "vote_count": 2062,
-    "overview": "An ambitious lobbyist faces off against the powerful gun lobby in an attempt to pass gun control legislation.",
-    "score": 85.628577321895
+    "id": 168,
+    "title": "Star Trek IV: The Voyage Home",
+    "release_date": "1986-11-26",
+    "vote_average": 7.181,
+    "vote_count": 1768,
+    "overview": "When a huge alien probe enters the galaxy and begins to vaporize Earth's oceans, Kirk and his crew must travel back in time in order to bring back whales and save the planet.",
+    "score": 88.30496452135411
   },
   "facts": [
-    "Did you know that 'Miss Sloane' was directed by John Madden? He's the talent behind the camera for this gripping political thriller!",
-    "The sharp, intricate screenplay for 'Miss Sloane' was penned by Jonathan Perera. It's always fascinating to know the mind behind such a powerful story!",
-    "Talk about a star-studded lineup! 'Miss Sloane' features an incredible ensemble cast including Jessica Chastain, Mark Strong, Gugu Mbatha-Raw, Michael Stuhlbarg, Alison Pill, Jake Lacy, John Lithgow, and Sam Waterston."
+    "Did you know that Star Trek IV wasn't Leonard Nimoy's first time directing a Star Trek film? This was actually his second directorial effort for the franchise!",
+    "This movie actually wraps up a huge narrative! It completes a compelling story arc that began all the way back in Star Trek II: The Wrath of Khan and continued through Star Trek III: The Search for Spock.",
+    "The entire planetary crisis hinges on an alien probe trying to communicate with humpback whales, but there's a huge problem: these whales are completely extinct in the future!"
   ],
-  "preparedAt": "2026-11-25T21:56:27.355Z"
+  "preparedAt": "2026-11-26T21:50:06.500Z"
 }
